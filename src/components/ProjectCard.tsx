@@ -3,18 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Github, Users } from "lucide-react";
 
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  screenshot?: string;
-  repoUrl?: string;
-  liveUrl?: string;
-  lookingForContributors: boolean;
-  tags: string[];
-  createdAt: Date;
-}
+import { Project } from "@/hooks/useProjects";
 
 interface ProjectCardProps {
   project: Project;

@@ -1,66 +1,19 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { ProjectCard, Project } from "@/components/ProjectCard";
+import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectForm } from "@/components/ProjectForm";
-import { LoginDialog } from "@/components/LoginDialog";
 import { FilterBar } from "@/components/FilterBar";
-import { Rocket, Code2, Users } from "lucide-react";
-
-// Sample projects for demo
-const sampleProjects: Project[] = [
-  {
-    id: "1",
-    title: "AI-Powered Code Review Bot",
-    description: "An n8n workflow that automatically reviews PRs using Claude, provides suggestions for improvements, and catches potential bugs before they hit production.",
-    author: "Sarah Chen",
-    screenshot: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=450&fit=crop",
-    repoUrl: "https://github.com/example/code-review-bot",
-    liveUrl: "https://example.com",
-    lookingForContributors: true,
-    tags: ["n8n", "AI", "Automation", "DevOps"],
-    createdAt: new Date("2024-01-02"),
-  },
-  {
-    id: "2",
-    title: "Newsletter Summarizer",
-    description: "Automatically summarizes long-form newsletters and sends daily digests. Built with Claude and integrated with multiple email providers.",
-    author: "Marcus Rodriguez",
-    screenshot: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&h=450&fit=crop",
-    repoUrl: "https://github.com/example/newsletter-summarizer",
-    lookingForContributors: false,
-    tags: ["AI", "Email", "Productivity"],
-    createdAt: new Date("2024-01-01"),
-  },
-  {
-    id: "3",
-    title: "Voice-to-Task Agent",
-    description: "Record voice memos and let AI convert them into structured tasks in your favorite project management tool. Works with Notion, Linear, and Asana.",
-    author: "Jamie Park",
-    screenshot: "https://images.unsplash.com/photo-1589254065878-42c9da997008?w=800&h=450&fit=crop",
-    repoUrl: "https://github.com/example/voice-task",
-    liveUrl: "https://voice-task.example.com",
-    lookingForContributors: true,
-    tags: ["Voice AI", "Agents", "Productivity"],
-    createdAt: new Date("2023-12-28"),
-  },
-  {
-    id: "4",
-    title: "Competitive Intelligence Dashboard",
-    description: "Tracks competitor pricing, features, and announcements using web scraping and AI analysis. Sends weekly reports with insights.",
-    author: "Alex Kim",
-    screenshot: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=450&fit=crop",
-    lookingForContributors: true,
-    tags: ["Analytics", "AI", "Business"],
-    createdAt: new Date("2023-12-25"),
-  },
-];
+import { Rocket, Code2, Users, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useProjects, Project } from "@/hooks/useProjects";
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState<string>();
-  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { projects, loading: projectsLoading, createProject } = useProjects();
+  
   const [showProjectForm, setShowProjectForm] = useState(false);
-  const [projects, setProjects] = useState<Project[]>(sampleProjects);
   const [search, setSearch] = useState("");
   const [showContributorsOnly, setShowContributorsOnly] = useState(false);
 
@@ -69,7 +22,7 @@ const Index = () => {
       const matchesSearch =
         search === "" ||
         project.title.toLowerCase().includes(search.toLowerCase()) ||
-        project.description.toLowerCase().includes(search.toLowerCase()) ||
+        (project.description && project.description.toLowerCase().includes(search.toLowerCase())) ||
         project.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()));
 
       const matchesContributors = !showContributorsOnly || project.lookingForContributors;
@@ -78,17 +31,7 @@ const Index = () => {
     });
   }, [projects, search, showContributorsOnly]);
 
-  const handleLogin = (name: string) => {
-    setUserName(name);
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserName(undefined);
-  };
-
-  const handleNewProject = (projectData: {
+  const handleNewProject = async (projectData: {
     title: string;
     description: string;
     screenshot?: string;
@@ -97,22 +40,20 @@ const Index = () => {
     lookingForContributors: boolean;
     tags: string[];
   }) => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      ...projectData,
-      author: userName || "Anonymous",
-      createdAt: new Date(),
-    };
-    setProjects((prev) => [newProject, ...prev]);
+    if (!user) return;
+    await createProject(user.id, projectData);
+    setShowProjectForm(false);
   };
+
+  const username = user?.user_metadata?.username || user?.email?.split("@")[0];
 
   return (
     <div className="min-h-screen bg-background">
       <Header
-        isLoggedIn={isLoggedIn}
-        userName={userName}
-        onLogin={() => setShowLoginDialog(true)}
-        onLogout={handleLogout}
+        isLoggedIn={!!user}
+        userName={username}
+        onLogin={() => navigate("/auth")}
+        onLogout={signOut}
         onNewProject={() => setShowProjectForm(true)}
       />
 
@@ -157,7 +98,11 @@ const Index = () => {
           projectCount={filteredProjects.length}
         />
 
-        {filteredProjects.length === 0 ? (
+        {projectsLoading ? (
+          <div className="mt-16 flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : filteredProjects.length === 0 ? (
           <div className="mt-16 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
               <Code2 className="h-8 w-8 text-muted-foreground" />
@@ -200,12 +145,7 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Dialogs */}
-      <LoginDialog
-        open={showLoginDialog}
-        onOpenChange={setShowLoginDialog}
-        onLogin={handleLogin}
-      />
+      {/* Project Form Dialog */}
       <ProjectForm
         open={showProjectForm}
         onOpenChange={setShowProjectForm}
