@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLikes } from "@/hooks/useLikes";
 import { ProjectComments } from "@/components/ProjectComments";
 import { RelatedProjects } from "@/components/RelatedProjects";
+import { SocialShare } from "@/components/SocialShare";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -298,6 +299,12 @@ const ProjectDetail = () => {
                 </Link>
               </CardContent>
             </Card>
+
+            {/* Social Share */}
+            <SocialShare 
+              title={project.title} 
+              url={window.location.href} 
+            />
           </div>
         </div>
 

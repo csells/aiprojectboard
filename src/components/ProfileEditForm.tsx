@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { 
   Globe, 
   Github, 
@@ -27,12 +28,22 @@ interface ProfileFormData {
 }
 
 interface ProfileEditFormProps {
+  userId: string;
+  avatarUrl: string | null;
   initialData: ProfileFormData;
   onSave: (data: ProfileFormData) => Promise<void>;
   onCancel: () => void;
+  onAvatarChange: (url: string | null) => void;
 }
 
-export const ProfileEditForm = ({ initialData, onSave, onCancel }: ProfileEditFormProps) => {
+export const ProfileEditForm = ({ 
+  userId,
+  avatarUrl,
+  initialData, 
+  onSave, 
+  onCancel,
+  onAvatarChange 
+}: ProfileEditFormProps) => {
   const [formData, setFormData] = useState<ProfileFormData>(initialData);
   const [saving, setSaving] = useState(false);
 
@@ -57,6 +68,17 @@ export const ProfileEditForm = ({ initialData, onSave, onCancel }: ProfileEditFo
           <CardTitle>Edit Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Avatar Upload */}
+          <div className="space-y-2">
+            <Label>Profile Photo</Label>
+            <AvatarUpload
+              userId={userId}
+              currentAvatarUrl={avatarUrl}
+              username={formData.username}
+              onAvatarChange={onAvatarChange}
+            />
+          </div>
+
           {/* Basic Info */}
           <div className="space-y-4">
             <div className="space-y-2">
