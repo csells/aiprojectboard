@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectForm } from "@/components/ProjectForm";
+import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
 import { Rocket, Code2, Users, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,9 +12,10 @@ import { useProjects, Project } from "@/hooks/useProjects";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { projects, loading: projectsLoading, createProject } = useProjects();
+  const { projects, loading: projectsLoading, createProject, updateProject, deleteProject } = useProjects();
   
   const [showProjectForm, setShowProjectForm] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [search, setSearch] = useState("");
   const [showContributorsOnly, setShowContributorsOnly] = useState(false);
 
@@ -43,6 +45,23 @@ const Index = () => {
     if (!user) return;
     await createProject(user.id, projectData);
     setShowProjectForm(false);
+  };
+
+  const handleEditProject = async (projectId: string, projectData: {
+    title: string;
+    description: string;
+    screenshot?: string;
+    repoUrl?: string;
+    liveUrl?: string;
+    lookingForContributors: boolean;
+    tags: string[];
+  }) => {
+    await updateProject(projectId, projectData);
+    setEditingProject(null);
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    await deleteProject(projectId);
   };
 
   const username = user?.user_metadata?.username || user?.email?.split("@")[0];
@@ -121,6 +140,9 @@ const Index = () => {
                 key={project.id}
                 project={project}
                 style={{ animationDelay: `${index * 100}ms` }}
+                isOwner={user?.id === project.userId}
+                onEdit={setEditingProject}
+                onDelete={handleDeleteProject}
               />
             ))}
           </div>
@@ -150,6 +172,14 @@ const Index = () => {
         open={showProjectForm}
         onOpenChange={setShowProjectForm}
         onSubmit={handleNewProject}
+      />
+
+      {/* Edit Project Dialog */}
+      <EditProjectDialog
+        project={editingProject}
+        open={!!editingProject}
+        onOpenChange={(open) => !open && setEditingProject(null)}
+        onSubmit={handleEditProject}
       />
     </div>
   );
