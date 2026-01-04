@@ -1,5 +1,6 @@
-import { useState, ReactNode, useRef } from "react";
+import { useState, ReactNode, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ interface FeedbackDialogProps {
 }
 
 export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogProps) => {
+  const { user } = useAuth();
   const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,6 +31,13 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
   const [submitting, setSubmitting] = useState(false);
   const honeypotRef = useRef<HTMLInputElement>(null);
   const formStartTime = useRef<number>(0);
+
+  // Auto-populate email when user is signed in
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [user]);
 
   // Use controlled or uncontrolled mode
   const isControlled = open !== undefined;
