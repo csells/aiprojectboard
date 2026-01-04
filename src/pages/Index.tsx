@@ -5,14 +5,16 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectForm } from "@/components/ProjectForm";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
-import { Rocket, Code2, Users, Loader2 } from "lucide-react";
+import { Rocket, Code2, Users, Loader2, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects, Project } from "@/hooks/useProjects";
+import { useLikes } from "@/hooks/useLikes";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { projects, loading: projectsLoading, createProject, updateProject, deleteProject } = useProjects();
+  const { getLikeData, toggleLike } = useLikes(user?.id);
   
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -102,6 +104,10 @@ const Index = () => {
                 <Users className="h-5 w-5 text-primary" />
                 <span>{projects.filter(p => p.lookingForContributors).length} Looking for Help</span>
               </div>
+              <div className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-primary" />
+                <span>Show some love!</span>
+              </div>
             </div>
           </div>
         </div>
@@ -143,6 +149,9 @@ const Index = () => {
                 isOwner={user?.id === project.userId}
                 onEdit={setEditingProject}
                 onDelete={handleDeleteProject}
+                likeCount={getLikeData(project.id).count}
+                hasLiked={getLikeData(project.id).hasLiked}
+                onLike={() => toggleLike(project.id)}
               />
             ))}
           </div>
@@ -171,6 +180,7 @@ const Index = () => {
       <ProjectForm
         open={showProjectForm}
         onOpenChange={setShowProjectForm}
+        userId={user?.id}
         onSubmit={handleNewProject}
       />
 

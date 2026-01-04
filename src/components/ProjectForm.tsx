@@ -11,13 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Link2, Loader2, Sparkles, X } from "lucide-react";
+import { Link2, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ScreenshotUpload } from "./ScreenshotUpload";
 
 interface ProjectFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  userId?: string;
   onSubmit: (project: {
     title: string;
     description: string;
@@ -29,7 +31,7 @@ interface ProjectFormProps {
   }) => void;
 }
 
-export function ProjectForm({ open, onOpenChange, onSubmit }: ProjectFormProps) {
+export function ProjectForm({ open, onOpenChange, userId, onSubmit }: ProjectFormProps) {
   const [importUrl, setImportUrl] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   
@@ -198,39 +200,11 @@ export function ProjectForm({ open, onOpenChange, onSubmit }: ProjectFormProps) 
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="screenshot">Screenshot URL</Label>
-            <div className="flex gap-2">
-              <Input
-                id="screenshot"
-                value={screenshot}
-                onChange={(e) => setScreenshot(e.target.value)}
-                placeholder="https://..."
-                type="url"
-                className="bg-secondary"
-              />
-              {screenshot && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setScreenshot("")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            {screenshot && (
-              <div className="mt-2 aspect-video overflow-hidden rounded-lg border border-border bg-secondary">
-                <img
-                  src={screenshot}
-                  alt="Preview"
-                  className="h-full w-full object-cover"
-                  onError={() => setScreenshot("")}
-                />
-              </div>
-            )}
-          </div>
+          <ScreenshotUpload
+            value={screenshot}
+            onChange={setScreenshot}
+            userId={userId}
+          />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
