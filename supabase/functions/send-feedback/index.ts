@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const TURNSTILE_SECRET_KEY = Deno.env.get("TURNSTILE_SECRET_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,12 +11,62 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Input validation schema - email collected for reply but NOT stored in database
+// Simple in-memory rate limiting (resets on cold starts, but good enough for basic protection)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT_MAX_REQUESTS = 3; // Max 3 submissions per hour per IP
+
+function checkRateLimit(identifier: string): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - record.count, resetIn: record.resetTime - now };
+}
+
+// Input validation schema
 const feedbackSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
   email: z.string().trim().email("Invalid email").max(255, "Email too long"),
   message: z.string().trim().min(1, "Message is required").max(5000, "Message too long"),
+  turnstileToken: z.string().min(1, "CAPTCHA verification required"),
 });
+
+// Verify Cloudflare Turnstile token
+async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
+  if (!TURNSTILE_SECRET_KEY) {
+    console.error("TURNSTILE_SECRET_KEY not configured");
+    return false;
+  }
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        secret: TURNSTILE_SECRET_KEY,
+        response: token,
+        remoteip: ip,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Turnstile verification result:", result.success);
+    return result.success === true;
+  } catch (error) {
+    console.error("Turnstile verification error:", error);
+    return false;
+  }
+}
 
 const sendEmail = async (to: string[], subject: string, html: string) => {
   console.log(`Attempting to send email to: ${to.join(", ")}, subject: ${subject}`);
@@ -38,7 +89,6 @@ const sendEmail = async (to: string[], subject: string, html: string) => {
   console.log(`Resend API response (${res.status}):`, responseText);
 
   if (!res.ok) {
-    // Check if it's a domain verification error
     if (responseText.includes("verify a domain")) {
       console.log("Domain not verified - email cannot be sent to external recipients");
       throw new Error("Email service configuration required. Please contact the administrator.");
@@ -66,6 +116,31 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                     req.headers.get("cf-connecting-ip") || 
+                     "unknown";
+    
+    // Check rate limit
+    const rateLimit = checkRateLimit(clientIP);
+    if (!rateLimit.allowed) {
+      console.log(`Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ 
+          error: `Too many submissions. Please try again in ${Math.ceil(rateLimit.resetIn / 60000)} minutes.` 
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(Math.ceil(rateLimit.resetIn / 1000))
+          } 
+        }
+      );
+    }
+
     // Optional authentication - try to get user if available, but allow anonymous
     let userId = 'anonymous';
     const authHeader = req.headers.get('Authorization');
@@ -83,7 +158,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log('Submission from user:', userId);
+    console.log('Submission from user:', userId, 'IP:', clientIP);
 
     // Parse and validate input
     const rawInput = await req.json();
@@ -97,7 +172,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { name, email, message } = parseResult.data;
+    const { name, email, message, turnstileToken } = parseResult.data;
+
+    // Verify Turnstile CAPTCHA
+    const isHuman = await verifyTurnstile(turnstileToken, clientIP);
+    if (!isHuman) {
+      console.log("Turnstile verification failed for IP:", clientIP);
+      return new Response(
+        JSON.stringify({ error: "CAPTCHA verification failed. Please try again." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Get the recipient email from environment
     const recipientEmail = Deno.env.get("FEEDBACK_EMAIL");
@@ -144,7 +229,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ success: true }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "X-RateLimit-Remaining": String(rateLimit.remaining)
+        } 
+      }
     );
   } catch (error: any) {
     console.error("Error in send-feedback function:", error);
