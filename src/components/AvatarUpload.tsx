@@ -40,10 +40,10 @@ export const AvatarUpload = ({
     setUploading(true);
 
     try {
-      // Create unique file name
+      // Create unique file name with userId as folder for RLS policy
       const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
