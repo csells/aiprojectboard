@@ -117,28 +117,39 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
 
     // Function to render the widget
     const renderWidget = () => {
-      if (!turnstileRef.current || !window.turnstile) return false;
+      if (!turnstileRef.current) {
+        console.error("Turnstile container ref not available");
+        return false;
+      }
+      
+      if (!window.turnstile) {
+        console.error("Turnstile not available on window");
+        return false;
+      }
+      
+      // Clear any existing content in the container
+      turnstileRef.current.innerHTML = '';
       
       try {
-        console.log("Rendering Turnstile widget");
+        console.log("Rendering Turnstile widget to container", turnstileRef.current);
         widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
           callback: (token: string) => {
-            console.log("Turnstile verified");
+            console.log("Turnstile verified successfully");
             setTurnstileToken(token);
           },
           "error-callback": () => {
-            console.error("Turnstile error");
+            console.error("Turnstile error callback triggered");
             setTurnstileToken("");
-            toast.error("CAPTCHA verification failed. Please try again.");
           },
           "expired-callback": () => {
-            console.log("Turnstile expired");
+            console.log("Turnstile token expired");
             setTurnstileToken("");
           },
           theme: "dark",
           size: "normal",
         });
+        console.log("Turnstile widget created with ID:", widgetIdRef.current);
         return true;
       } catch (e) {
         console.error("Error rendering turnstile:", e);
@@ -146,29 +157,31 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
       }
     };
 
-    // Try to render immediately if loaded, otherwise wait
-    if (turnstileLoaded && window.turnstile) {
-      // Small delay to ensure DOM is ready
-      const timeout = setTimeout(renderWidget, 200);
-      return () => clearTimeout(timeout);
-    } else {
-      // Poll for turnstile to be available
-      let attempts = 0;
-      const maxAttempts = 20;
-      const interval = setInterval(() => {
-        attempts++;
-        if (window.turnstile) {
-          clearInterval(interval);
-          setTurnstileLoaded(true);
-          setTimeout(renderWidget, 200);
-        } else if (attempts >= maxAttempts) {
-          clearInterval(interval);
-          console.error("Turnstile failed to load after", maxAttempts, "attempts");
-        }
-      }, 250);
-      return () => clearInterval(interval);
-    }
-  }, [isOpen, turnstileLoaded]);
+    // Use a longer delay and ensure DOM is ready
+    const timeout = setTimeout(() => {
+      if (window.turnstile) {
+        renderWidget();
+      } else {
+        // If turnstile isn't loaded yet, poll for it
+        let attempts = 0;
+        const maxAttempts = 40; // 10 seconds
+        const interval = setInterval(() => {
+          attempts++;
+          console.log("Polling for turnstile, attempt", attempts);
+          if (window.turnstile) {
+            clearInterval(interval);
+            setTurnstileLoaded(true);
+            renderWidget();
+          } else if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            console.error("Turnstile failed to load after", maxAttempts, "attempts");
+          }
+        }, 250);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
