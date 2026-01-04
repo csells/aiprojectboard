@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const TURNSTILE_SECRET_KEY = Deno.env.get("TURNSTILE_SECRET_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,40 +32,12 @@ function checkRateLimit(identifier: string): { allowed: boolean; remaining: numb
   return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - record.count, resetIn: record.resetTime - now };
 }
 
-// Input validation schema
+// Input validation schema (no CAPTCHA - using honeypot on frontend)
 const feedbackSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
   email: z.string().trim().email("Invalid email").max(255, "Email too long"),
   message: z.string().trim().min(1, "Message is required").max(5000, "Message too long"),
-  turnstileToken: z.string().min(1, "CAPTCHA verification required"),
 });
-
-// Verify Cloudflare Turnstile token
-async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
-  if (!TURNSTILE_SECRET_KEY) {
-    console.error("TURNSTILE_SECRET_KEY not configured");
-    return false;
-  }
-
-  try {
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        secret: TURNSTILE_SECRET_KEY,
-        response: token,
-        remoteip: ip,
-      }),
-    });
-
-    const result = await response.json();
-    console.log("Turnstile verification result:", result.success);
-    return result.success === true;
-  } catch (error) {
-    console.error("Turnstile verification error:", error);
-    return false;
-  }
-}
 
 const sendEmail = async (to: string[], subject: string, html: string) => {
   console.log(`Attempting to send email to: ${to.join(", ")}, subject: ${subject}`);
@@ -172,17 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { name, email, message, turnstileToken } = parseResult.data;
-
-    // Verify Turnstile CAPTCHA
-    const isHuman = await verifyTurnstile(turnstileToken, clientIP);
-    if (!isHuman) {
-      console.log("Turnstile verification failed for IP:", clientIP);
-      return new Response(
-        JSON.stringify({ error: "CAPTCHA verification failed. Please try again." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { name, email, message } = parseResult.data;
 
     // Get the recipient email from environment
     const recipientEmail = Deno.env.get("FEEDBACK_EMAIL");
