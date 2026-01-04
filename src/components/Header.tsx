@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, LogIn, LogOut } from "lucide-react";
+import { Plus, LogIn, LogOut, Sparkles } from "lucide-react";
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -11,15 +11,15 @@ interface HeaderProps {
 
 export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-            <span className="text-2xl">🎩</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-serif text-lg font-bold text-foreground">Community Projects</h1>
-            <p className="text-xs text-muted-foreground">Nate's Substack</p>
+            <h1 className="text-lg font-semibold text-foreground tracking-tight">AI Builders</h1>
+            <p className="text-xs text-muted-foreground">Community Showcase</p>
           </div>
         </div>
 

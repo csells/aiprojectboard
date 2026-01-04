@@ -5,7 +5,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectForm } from "@/components/ProjectForm";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
-import { Rocket, Code2, Users, Loader2, Heart } from "lucide-react";
+import { Sparkles, Cpu, Users, Loader2, Zap, Brain } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects, Project } from "@/hooks/useProjects";
 import { useLikes } from "@/hooks/useLikes";
@@ -80,33 +80,38 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-        <div className="container mx-auto px-4 py-16 sm:py-24">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-10 right-20 w-96 h-96 bg-accent/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="container mx-auto px-4 py-16 sm:py-24 relative">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm text-primary">
-              <Rocket className="h-4 w-4" />
-              Community Building Board
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-sm text-primary backdrop-blur-sm">
+              <Sparkles className="h-4 w-4" />
+              AI Project Showcase
             </div>
-            <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              What Are You{" "}
-              <span className="text-gradient">Building?</span>
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              Discover{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-pink-500 to-accent">
+                AI Projects
+              </span>
+              {" "}Built by the Community
             </h1>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-              Share your AI projects, find collaborators, and get inspired by what fellow community members are creating.
+              Share your AI agents, LLM apps, and machine learning experiments. Find collaborators and get inspired by what builders are creating.
             </p>
             
             <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Code2 className="h-5 w-5 text-primary" />
-                <span>{projects.length} Projects Shared</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border">
+                <Brain className="h-5 w-5 text-primary" />
+                <span>{projects.length} AI Projects</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <span>{projects.filter(p => p.lookingForContributors).length} Looking for Help</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border">
+                <Users className="h-5 w-5 text-accent" />
+                <span>{projects.filter(p => p.lookingForContributors).length} Need Collaborators</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Heart className="h-5 w-5 text-primary" />
-                <span>Show some love!</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border">
+                <Zap className="h-5 w-5 text-yellow-500" />
+                <span>Open Source</span>
               </div>
             </div>
           </div>
@@ -129,14 +134,14 @@ const Index = () => {
           </div>
         ) : filteredProjects.length === 0 ? (
           <div className="mt-16 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-              <Code2 className="h-8 w-8 text-muted-foreground" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30">
+              <Cpu className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-serif text-xl text-foreground">No projects found</h3>
+            <h3 className="text-xl font-semibold text-foreground">No projects found</h3>
             <p className="mt-2 text-muted-foreground">
               {search || showContributorsOnly
                 ? "Try adjusting your filters"
-                : "Be the first to share your project!"}
+                : "Be the first to share your AI project!"}
             </p>
           </div>
         ) : (
@@ -147,6 +152,7 @@ const Index = () => {
                 project={project}
                 style={{ animationDelay: `${index * 100}ms` }}
                 isOwner={user?.id === project.userId}
+                userId={user?.id}
                 onEdit={setEditingProject}
                 onDelete={handleDeleteProject}
                 likeCount={getLikeData(project.id).count}
@@ -159,19 +165,11 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 py-8">
+      <footer className="border-t border-border bg-card/30 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>
-            Built with 🎩 by the{" "}
-            <a
-              href="https://natesnewsletter.substack.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Nate's Substack
-            </a>{" "}
-            community
+          <p className="flex items-center justify-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            AI Builders Community Showcase
           </p>
         </div>
       </footer>

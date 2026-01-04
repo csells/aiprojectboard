@@ -21,6 +21,7 @@ import { ExternalLink, Github, Heart, MoreVertical, Pencil, Trash2, Users } from
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { ProjectComments } from "@/components/ProjectComments";
 
 import { Project } from "@/hooks/useProjects";
 
@@ -28,6 +29,7 @@ interface ProjectCardProps {
   project: Project;
   style?: React.CSSProperties;
   isOwner?: boolean;
+  userId?: string;
   onEdit?: (project: Project) => void;
   onDelete?: (projectId: string) => void;
   likeCount?: number;
@@ -39,6 +41,7 @@ export function ProjectCard({
   project, 
   style, 
   isOwner, 
+  userId,
   onEdit, 
   onDelete,
   likeCount = 0,
@@ -46,6 +49,7 @@ export function ProjectCard({
   onLike,
 }: ProjectCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const handleDelete = () => {
     onDelete?.(project.id);
@@ -79,7 +83,7 @@ export function ProjectCard({
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h3 className="font-serif text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                 {project.title}
               </h3>
               <Link 
@@ -137,33 +141,51 @@ export function ProjectCard({
           )}
         </CardContent>
 
-        <CardFooter className="gap-2 border-t border-border pt-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLike}
-            className={cn(
-              "gap-1.5",
-              hasLiked && "text-red-500 hover:text-red-600"
+        <CardFooter className="flex-col gap-2 border-t border-border pt-3">
+          <div className="flex w-full items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLike}
+              className={cn(
+                "gap-1.5",
+                hasLiked && "text-red-500 hover:text-red-600"
+              )}
+            >
+              <Heart className={cn("h-4 w-4", hasLiked && "fill-current")} />
+              {likeCount > 0 && <span>{likeCount}</span>}
+            </Button>
+            <ProjectComments
+              projectId={project.id}
+              userId={userId}
+              isExpanded={showComments}
+              onToggle={() => setShowComments(!showComments)}
+            />
+            <div className="flex-1" />
+            {project.repoUrl && (
+              <Button variant="ghost" size="sm" asChild>
+                <a href={project.repoUrl} target="_blank" rel="noopener noreferrer">
+                  <Github className="h-4 w-4" />
+                </a>
+              </Button>
             )}
-          >
-            <Heart className={cn("h-4 w-4", hasLiked && "fill-current")} />
-            {likeCount > 0 && <span>{likeCount}</span>}
-          </Button>
-          <div className="flex-1" />
-          {project.repoUrl && (
-            <Button variant="ghost" size="sm" asChild>
-              <a href={project.repoUrl} target="_blank" rel="noopener noreferrer">
-                <Github className="h-4 w-4" />
-              </a>
-            </Button>
-          )}
-          {project.liveUrl && (
-            <Button variant="ghost" size="sm" asChild>
-              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
+            {project.liveUrl && (
+              <Button variant="ghost" size="sm" asChild>
+                <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
+          </div>
+          {showComments && (
+            <div className="w-full">
+              <ProjectComments
+                projectId={project.id}
+                userId={userId}
+                isExpanded={true}
+                onToggle={() => setShowComments(false)}
+              />
+            </div>
           )}
         </CardFooter>
       </Card>
