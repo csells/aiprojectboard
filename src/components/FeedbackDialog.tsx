@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,10 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Lightbulb, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Turnstile } from "@marsidev/react-turnstile";
-
-// Cloudflare Turnstile site key (public key, safe to embed)
-const TURNSTILE_SITE_KEY = "0x4AAAAAAACKeAgxMCFbui95I";
 
 interface FeedbackDialogProps {
   open?: boolean;
@@ -31,8 +27,8 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileKey, setTurnstileKey] = useState(0);
+  const honeypotRef = useRef<HTMLInputElement>(null);
+  const formStartTime = useRef<number>(0);
 
   // Use controlled or uncontrolled mode
   const isControlled = open !== undefined;
@@ -47,8 +43,26 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
       return;
     }
 
-    if (!turnstileToken && TURNSTILE_SITE_KEY) {
-      toast.error("Please complete the CAPTCHA verification");
+    // Honeypot check - if filled, it's a bot
+    if (honeypotRef.current?.value) {
+      console.log("Honeypot triggered - likely bot");
+      toast.success("Thank you for your suggestion!");
+      setName("");
+      setEmail("");
+      setMessage("");
+      setIsOpen(false);
+      return;
+    }
+
+    // Time-based check - form filled too fast (under 3 seconds) is likely a bot
+    const elapsedTime = Date.now() - formStartTime.current;
+    if (elapsedTime < 3000) {
+      console.log("Form submitted too quickly - likely bot");
+      toast.success("Thank you for your suggestion!");
+      setName("");
+      setEmail("");
+      setMessage("");
+      setIsOpen(false);
       return;
     }
 
@@ -56,7 +70,7 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
 
     try {
       const { data, error } = await supabase.functions.invoke("send-feedback", {
-        body: { name, email, message, turnstileToken },
+        body: { name, email, message },
       });
 
       if (error) {
@@ -68,20 +82,14 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
         throw new Error(data.error);
       }
 
-      // Success - close dialog first, then show toast
+      // Success
       setName("");
       setEmail("");
       setMessage("");
-      setTurnstileToken("");
       setIsOpen(false);
       toast.success("Thank you for your suggestion! We'll review it soon.");
     } catch (error: any) {
       console.error("Feedback error:", error);
-      
-      // Reset CAPTCHA on error by incrementing key
-      setTurnstileKey(prev => prev + 1);
-      setTurnstileToken("");
-      
       toast.error(error.message || "Failed to send suggestion. Please try again.");
     } finally {
       setSubmitting(false);
@@ -91,9 +99,7 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
   const handleOpenChange = (newOpen: boolean) => {
     setIsOpen(newOpen);
     if (newOpen) {
-      // Reset turnstile when dialog opens
-      setTurnstileToken("");
-      setTurnstileKey(prev => prev + 1);
+      formStartTime.current = Date.now();
     }
   };
 
@@ -150,36 +156,21 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
             />
           </div>
           
-          {/* Cloudflare Turnstile CAPTCHA */}
-          {TURNSTILE_SITE_KEY && isOpen && (
-            <div className="flex justify-center">
-              <Turnstile
-                key={turnstileKey}
-                siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => {
-                  console.log("Turnstile verified successfully");
-                  setTurnstileToken(token);
-                }}
-                onError={() => {
-                  console.error("Turnstile error");
-                  setTurnstileToken("");
-                }}
-                onExpire={() => {
-                  console.log("Turnstile token expired");
-                  setTurnstileToken("");
-                }}
-                options={{
-                  theme: "auto",
-                  size: "normal",
-                }}
-              />
-            </div>
-          )}
+          {/* Honeypot field - hidden from users, visible to bots */}
+          <input
+            ref={honeypotRef}
+            type="text"
+            name="website"
+            autoComplete="off"
+            tabIndex={-1}
+            className="absolute -left-[9999px] opacity-0 h-0 w-0"
+            aria-hidden="true"
+          />
           
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={submitting || (TURNSTILE_SITE_KEY && !turnstileToken)}
+            disabled={submitting}
           >
             {submitting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
