@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MessageSquare, Send, Loader2 } from "lucide-react";
+import { Lightbulb, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const FeedbackDialog = () => {
@@ -33,20 +33,27 @@ export const FeedbackDialog = () => {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase.functions.invoke("send-feedback", {
+      const { data, error } = await supabase.functions.invoke("send-feedback", {
         body: { name, email, message },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
 
-      toast.success("Thank you for your feedback!");
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      toast.success("Thank you for your suggestion!");
       setOpen(false);
       setName("");
       setEmail("");
       setMessage("");
     } catch (error: any) {
       console.error("Feedback error:", error);
-      toast.error("Failed to send feedback. Please try again.");
+      toast.error(error.message || "Failed to send suggestion. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -56,15 +63,15 @@ export const FeedbackDialog = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <MessageSquare className="h-4 w-4" />
-          Feedback
+          <Lightbulb className="h-4 w-4" />
+          Suggestion Box
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Send Feedback</DialogTitle>
+          <DialogTitle>Suggestion Box</DialogTitle>
           <DialogDescription>
-            Have a suggestion or found a bug? We'd love to hear from you!
+            Have an idea to make this better? We'd love to hear from you!
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -90,12 +97,12 @@ export const FeedbackDialog = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="feedback-message">Message</Label>
+            <Label htmlFor="feedback-message">Your Suggestion</Label>
             <Textarea
               id="feedback-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Your feedback, suggestion, or bug report..."
+              placeholder="I think it would be great if..."
               rows={4}
               required
             />
@@ -106,7 +113,7 @@ export const FeedbackDialog = () => {
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}
-            Send Feedback
+            Send Suggestion
           </Button>
         </form>
       </DialogContent>

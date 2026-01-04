@@ -15,6 +15,8 @@ interface FeedbackRequest {
 }
 
 const sendEmail = async (to: string[], subject: string, html: string) => {
+  console.log(`Attempting to send email to: ${to.join(", ")}, subject: ${subject}`);
+  
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -29,12 +31,19 @@ const sendEmail = async (to: string[], subject: string, html: string) => {
     }),
   });
 
+  const responseText = await res.text();
+  console.log(`Resend API response (${res.status}):`, responseText);
+
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Resend API error: ${error}`);
+    // Check if it's a domain verification error
+    if (responseText.includes("verify a domain")) {
+      console.log("Domain not verified - email cannot be sent to external recipients");
+      throw new Error("Email service configuration required. Please contact the administrator.");
+    }
+    throw new Error(`Email sending failed: ${responseText}`);
   }
 
-  return res.json();
+  return JSON.parse(responseText);
 };
 
 const handler = async (req: Request): Promise<Response> => {
