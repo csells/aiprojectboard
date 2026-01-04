@@ -52,6 +52,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check if user has disabled email notifications
+    const { data: prefs } = await supabase
+      .from("notification_preferences")
+      .select("email_on_comments")
+      .eq("user_id", project.user_id)
+      .maybeSingle();
+
+    if (prefs && prefs.email_on_comments === false) {
+      return new Response(
+        JSON.stringify({ message: "Skipped: user disabled comment notifications" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Get owner's email from auth.users
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(project.user_id);
 

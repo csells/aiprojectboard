@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import ProjectDetail from "./pages/ProjectDetail";
+import Settings from "./pages/Settings";
 import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/project/:projectId" element={<ProjectDetail />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/about" element={<About />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
