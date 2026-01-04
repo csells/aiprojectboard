@@ -32,11 +32,13 @@ function checkRateLimit(identifier: string): { allowed: boolean; remaining: numb
   return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - record.count, resetIn: record.resetTime - now };
 }
 
-// Input validation schema (no CAPTCHA - using honeypot on frontend)
+// Input validation schema with optional honeypot field
 const feedbackSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
   email: z.string().trim().email("Invalid email").max(255, "Email too long"),
   message: z.string().trim().min(1, "Message is required").max(5000, "Message too long"),
+  // Honeypot field - should always be empty for real users
+  website: z.string().optional(),
 });
 
 const sendEmail = async (to: string[], subject: string, html: string) => {
@@ -143,7 +145,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { name, email, message } = parseResult.data;
+    const { name, email, message, website } = parseResult.data;
+
+    // Server-side honeypot check - if "website" field has value, it's a bot
+    // Silently accept but don't process (bots think it worked)
+    if (website && website.trim().length > 0) {
+      console.log(`Honeypot triggered from IP: ${clientIP} - rejecting silently`);
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Get the recipient email from environment
     const recipientEmail = Deno.env.get("FEEDBACK_EMAIL");

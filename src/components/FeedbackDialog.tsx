@@ -70,7 +70,13 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
 
     try {
       const { data, error } = await supabase.functions.invoke("send-feedback", {
-        body: { name, email, message },
+        body: { 
+          name, 
+          email, 
+          message,
+          // Send honeypot value for server-side validation too
+          website: honeypotRef.current?.value || ""
+        },
       });
 
       if (error) {
