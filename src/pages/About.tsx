@@ -184,14 +184,14 @@ const About = () => {
                     <p className="text-sm text-muted-foreground mb-2">Endpoint:</p>
                     <div className="flex items-center gap-2">
                       <code className="text-sm text-foreground break-all flex-1">
-                        https://aiprojectboard.com/functions/v1/mcp-server
+                        https://vbexqyglhfppxlhwlbes.supabase.co/functions/v1/mcp-server
                       </code>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="shrink-0 h-8 w-8 p-0"
                         onClick={() => {
-                          navigator.clipboard.writeText("https://aiprojectboard.com/functions/v1/mcp-server");
+                          navigator.clipboard.writeText("https://vbexqyglhfppxlhwlbes.supabase.co/functions/v1/mcp-server");
                           toast.success("Copied to clipboard!");
                         }}
                       >
