@@ -1,6 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
-import { Plus, LogIn, LogOut, Sparkles } from "lucide-react";
+import { Plus, LogIn, Sparkles, User, LogOut, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -11,6 +20,15 @@ interface HeaderProps {
 }
 
 export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }: HeaderProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleProfileClick = () => {
+    if (user?.id) {
+      navigate(`/profile/${user.id}`);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -28,16 +46,30 @@ export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }
           <FeedbackDialog />
           {isLoggedIn ? (
             <>
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                Hey, <span className="text-primary">{userName}</span>
-              </span>
               <Button variant="glow" size="sm" onClick={onNewProject}>
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Share Project</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={onLogout}>
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1">
+                    <span className="text-muted-foreground">Hey,</span>
+                    <span className="text-primary">{userName}</span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <Button variant="outline" size="sm" onClick={onLogin}>
