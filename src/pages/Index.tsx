@@ -231,8 +231,6 @@ const Index = () => {
           <FilterBar
             search={search}
             onSearchChange={setSearch}
-            showContributorsOnly={showContributorsOnly}
-            onContributorsToggle={() => setShowContributorsOnly(!showContributorsOnly)}
             projectCount={filteredProjects.length}
           />
 
