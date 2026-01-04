@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ExternalLink, Github, Heart, MoreVertical, Pencil, Trash2, Users } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ProjectComments } from "@/components/ProjectComments";
 
@@ -51,6 +51,16 @@ export function ProjectCard({
 }: ProjectCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const navigate = useNavigate();
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('[role="menuitem"]')) {
+      return;
+    }
+    navigate(`/project/${project.id}`);
+  };
 
   const handleDelete = () => {
     onDelete?.(project.id);
@@ -60,8 +70,9 @@ export function ProjectCard({
   return (
     <>
       <Card 
-        className="group animate-slide-up overflow-hidden opacity-0 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+        className="group animate-slide-up overflow-hidden opacity-0 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
         style={style}
+        onClick={handleCardClick}
       >
         {project.screenshot && (
           <div className="relative aspect-video overflow-hidden bg-secondary">
