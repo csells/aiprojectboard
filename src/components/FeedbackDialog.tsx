@@ -15,8 +15,8 @@ import {
 import { Lightbulb, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-// Cloudflare Turnstile site key from environment
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
+// Cloudflare Turnstile site key (public key, safe to embed)
+const TURNSTILE_SITE_KEY = "0x4AAAAAAACKeAgxMCFbui95I";
 
 interface FeedbackDialogProps {
   open?: boolean;
