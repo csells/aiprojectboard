@@ -1,17 +1,20 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Github, Twitter, Linkedin, ExternalLink, Sparkles, Heart, Mail } from "lucide-react";
+import { ArrowLeft, Github, Twitter, Linkedin, ExternalLink, Sparkles, Heart, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 
 const About = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const username = user?.user_metadata?.username || user?.email?.split("@")[0];
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -141,12 +144,6 @@ const About = () => {
                         LinkedIn
                       </a>
                     </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <a href="mailto:csells@sellsbrothers.com">
-                        <Mail className="mr-2 h-4 w-4" />
-                        Email
-                      </a>
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -176,11 +173,16 @@ const About = () => {
               <p className="text-muted-foreground mb-6">
                 Have questions, suggestions, or want to connect? We'd love to hear from you.
               </p>
-              <Button asChild>
-                <a href="mailto:csells@sellsbrothers.com">
-                  Contact Chris
-                </a>
-              </Button>
+              <FeedbackDialog 
+                open={feedbackOpen} 
+                onOpenChange={setFeedbackOpen}
+                trigger={
+                  <Button onClick={() => setFeedbackOpen(true)}>
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Contact Chris
+                  </Button>
+                }
+              />
             </CardContent>
           </Card>
         </div>

@@ -30,7 +30,6 @@ interface ProfileData {
   username: string | null;
   avatar_url: string | null;
   bio: string | null;
-  email: string | null;
   website_url: string | null;
   github_url: string | null;
   twitter_url: string | null;
