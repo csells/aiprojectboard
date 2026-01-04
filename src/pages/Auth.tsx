@@ -1,36 +1,53 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Rocket } from "lucide-react";
+import { Rocket, ArrowLeft, Mail, KeyRound, CheckCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+
+type AuthMode = "login" | "signup" | "forgot" | "reset";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  useEffect(() => {
+    // Check for password reset flow from URL
+    const type = searchParams.get("type");
+    if (type === "recovery") {
+      setMode("reset");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      if (event === "PASSWORD_RECOVERY") {
+        setMode("reset");
+        return;
+      }
+      if (session && mode !== "reset") {
         navigate("/");
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session && mode !== "reset") {
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, mode]);
 
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -44,12 +61,58 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
+      });
+      if (error) throw error;
+      setEmailSent(true);
+      toast.success("Password reset email sent!");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      toast.success("Password updated successfully!");
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -83,6 +146,133 @@ const Auth = () => {
     }
   };
 
+  // Reset password form
+  if (mode === "reset") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
+              <KeyRound className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="font-serif text-3xl font-bold text-foreground">
+              Set New Password
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Enter your new password below
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-6">
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">New Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="bg-secondary"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="bg-secondary"
+                />
+              </div>
+
+              <Button type="submit" variant="glow" className="w-full" disabled={loading}>
+                {loading ? "Updating..." : "Update Password"}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Forgot password form
+  if (mode === "forgot") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
+              <Mail className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="font-serif text-3xl font-bold text-foreground">
+              Reset Password
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              We'll send you a link to reset your password
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-6">
+            {emailSent ? (
+              <div className="text-center py-4">
+                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                <h2 className="text-lg font-semibold text-foreground mb-2">Check your email</h2>
+                <p className="text-muted-foreground mb-4">
+                  We've sent a password reset link to <strong>{email}</strong>
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEmailSent(false);
+                    setMode("login");
+                  }}
+                >
+                  Back to Sign In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    className="bg-secondary"
+                  />
+                </div>
+
+                <Button type="submit" variant="glow" className="w-full" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="w-full text-sm text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  Back to Sign In
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -91,10 +281,10 @@ const Auth = () => {
             <Rocket className="h-8 w-8 text-primary" />
           </div>
           <h1 className="font-serif text-3xl font-bold text-foreground">
-            {isLogin ? "Welcome Back" : "Join the Community"}
+            {mode === "login" ? "Welcome Back" : "Join the Community"}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {isLogin
+            {mode === "login"
               ? "Sign in to share your projects"
               : "Create an account to start building"}
           </p>
@@ -136,7 +326,7 @@ const Auth = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
+            {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input
@@ -163,7 +353,18 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => setMode("forgot")}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -177,17 +378,17 @@ const Auth = () => {
             </div>
 
             <Button type="submit" variant="glow" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
+              {loading ? "Loading..." : mode === "login" ? "Sign In" : "Create Account"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => setMode(mode === "login" ? "signup" : "login")}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              {mode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
           </div>
         </div>
