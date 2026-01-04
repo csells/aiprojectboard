@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
@@ -32,7 +32,7 @@ export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30">
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
@@ -40,7 +40,7 @@ export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }
             <h1 className="text-lg font-semibold text-foreground tracking-tight">AI Builders</h1>
             <p className="text-xs text-muted-foreground">Community Showcase</p>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex items-center gap-3">
           <FeedbackDialog />
