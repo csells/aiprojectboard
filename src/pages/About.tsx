@@ -19,12 +19,12 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>About | AI Builders Community</title>
-        <meta name="description" content="Learn about AI Builders Community, a platform inspired by Nate Jones and built by Chris Sells to showcase AI-powered projects." />
-        <meta name="keywords" content="AI Builders, community, about, Chris Sells, Nate Jones, AI projects" />
-        <link rel="canonical" href="https://aibuilders.community/about" />
-        <meta property="og:title" content="About | AI Builders Community" />
-        <meta property="og:description" content="Learn about AI Builders Community, a platform inspired by Nate Jones and built by Chris Sells." />
+        <title>About | AI Project Board</title>
+        <meta name="description" content="Learn about AI Project Board, a platform inspired by Nate Jones and built by Chris Sells to showcase AI-powered projects." />
+        <meta name="keywords" content="AI Project Board, community, about, Chris Sells, Nate Jones, AI projects" />
+        <link rel="canonical" href="https://aiprojectboard.com/about" />
+        <meta property="og:title" content="About | AI Project Board" />
+        <meta property="og:description" content="Learn about AI Project Board, a platform inspired by Nate Jones and built by Chris Sells." />
         <meta property="og:type" content="website" />
       </Helmet>
 
@@ -176,13 +176,13 @@ const About = () => {
                 <div>
                   <h2 className="text-2xl font-semibold text-foreground mb-4">MCP Server</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    Access AI Builders Community data programmatically via our public MCP (Model Context Protocol) server. 
+                    Access AI Project Board data programmatically via our public MCP (Model Context Protocol) server. 
                     Query projects, profiles, and their connections using a standardized JSON-RPC interface.
                   </p>
                   <div className="bg-muted/50 rounded-lg p-4 mb-4">
                     <p className="text-sm text-muted-foreground mb-2">Endpoint:</p>
                     <code className="text-sm text-foreground break-all">
-                      https://vbexqyglhfppxlhwlbes.supabase.co/functions/v1/mcp-server
+                      https://aiprojectboard.com/functions/v1/mcp-server
                     </code>
                   </div>
                   <p className="text-muted-foreground text-sm mb-4">
