@@ -152,8 +152,8 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
             console.log("Turnstile token expired");
             setTurnstileToken("");
           },
-          theme: "dark",
-          size: "normal",
+          theme: "auto",
+          size: "compact",
         });
         console.log("Turnstile widget created with ID:", widgetIdRef.current);
         return true;
