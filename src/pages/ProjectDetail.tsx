@@ -196,9 +196,9 @@ const ProjectDetail = () => {
             )}
 
             {/* Description */}
-            <Card>
+            <Card className="bg-card">
               <CardContent className="pt-6">
-                <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                <div className="prose prose-sm max-w-none text-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                   <ReactMarkdown>{project.description || "No description provided."}</ReactMarkdown>
                 </div>
               </CardContent>
