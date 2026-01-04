@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Send, Trash2, Loader2 } from "lucide-react";
 import { useComments, Comment } from "@/hooks/useComments";
 import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectCommentsProps {
   projectId: string;
@@ -24,12 +25,28 @@ export function ProjectComments({
   const { comments, loading, addComment, deleteComment } = useComments(projectId);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [commenterName, setCommenterName] = useState<string>("Someone");
+
+  useEffect(() => {
+    const fetchCommenterName = async () => {
+      if (!userId) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", userId)
+        .single();
+      if (data?.username) {
+        setCommenterName(data.username);
+      }
+    };
+    fetchCommenterName();
+  }, [userId]);
 
   const handleSubmit = async () => {
     if (!userId || !newComment.trim()) return;
     
     setSubmitting(true);
-    const success = await addComment(userId, newComment);
+    const success = await addComment(userId, newComment, commenterName);
     if (success) {
       setNewComment("");
     }
