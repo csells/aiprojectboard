@@ -1,6 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import ReactMarkdown from "react-markdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,7 +129,9 @@ export function ProjectCard({
         </CardHeader>
 
         <CardContent className="pb-3">
-          <p className="text-sm text-secondary-foreground line-clamp-3">{project.description}</p>
+          <div className="prose prose-sm dark:prose-invert max-w-none line-clamp-3 text-secondary-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <ReactMarkdown>{project.description || ""}</ReactMarkdown>
+          </div>
           
           {project.tags.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
