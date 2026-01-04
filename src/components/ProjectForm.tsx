@@ -11,7 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImagePlus, X } from "lucide-react";
+import { Link2, Loader2, Sparkles, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProjectFormProps {
   open: boolean;
@@ -28,6 +30,9 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({ open, onOpenChange, onSubmit }: ProjectFormProps) {
+  const [importUrl, setImportUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [screenshot, setScreenshot] = useState("");
@@ -35,6 +40,42 @@ export function ProjectForm({ open, onOpenChange, onSubmit }: ProjectFormProps) 
   const [liveUrl, setLiveUrl] = useState("");
   const [lookingForContributors, setLookingForContributors] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
+
+  const handleImport = async () => {
+    if (!importUrl.trim()) return;
+    
+    setIsImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-url-info', {
+        body: { url: importUrl.trim() },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Populate form with extracted data
+      if (data.title) setTitle(data.title);
+      if (data.description) setDescription(data.description);
+      if (data.screenshot) setScreenshot(data.screenshot);
+      if (data.repoUrl) setRepoUrl(data.repoUrl);
+      if (data.liveUrl) setLiveUrl(data.liveUrl);
+      if (data.tags && data.tags.length > 0) {
+        setTagsInput(data.tags.join(", "));
+      }
+
+      toast.success("Project info imported! Review and edit as needed.");
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to import from URL");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +96,7 @@ export function ProjectForm({ open, onOpenChange, onSubmit }: ProjectFormProps) 
     });
 
     // Reset form
+    setImportUrl("");
     setTitle("");
     setDescription("");
     setScreenshot("");
@@ -65,15 +107,70 @@ export function ProjectForm({ open, onOpenChange, onSubmit }: ProjectFormProps) 
     onOpenChange(false);
   };
 
+  const resetForm = () => {
+    setImportUrl("");
+    setTitle("");
+    setDescription("");
+    setScreenshot("");
+    setRepoUrl("");
+    setLiveUrl("");
+    setLookingForContributors(false);
+    setTagsInput("");
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) resetForm();
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-serif text-xl">Share Your Project</DialogTitle>
           <DialogDescription>
-            Let the community know what you're building. Fill in the details below.
+            Paste a GitHub or website URL to auto-fill, or enter details manually.
           </DialogDescription>
         </DialogHeader>
+
+        {/* URL Import Section */}
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-primary mb-2">
+            <Sparkles className="h-4 w-4" />
+            Auto-Import from URL
+          </div>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Link2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={importUrl}
+                onChange={(e) => setImportUrl(e.target.value)}
+                placeholder="https://github.com/... or https://your-project.com"
+                className="pl-9 bg-background"
+                disabled={isImporting}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleImport}
+              disabled={!importUrl.trim() || isImporting}
+            >
+              {isImporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Import"
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">or fill manually</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
