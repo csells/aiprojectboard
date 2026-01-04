@@ -16,6 +16,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   ArrowLeft, 
   ExternalLink, 
@@ -24,15 +35,20 @@ import {
   Users, 
   Calendar,
   Loader2,
-  Home
+  Home,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLikes } from "@/hooks/useLikes";
+import { useProjects } from "@/hooks/useProjects";
 import { ProjectComments } from "@/components/ProjectComments";
 import { RelatedProjects } from "@/components/RelatedProjects";
 import { SocialShare } from "@/components/SocialShare";
+import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface ProjectData {
   id: string;
@@ -57,10 +73,15 @@ const ProjectDetail = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { getLikeData, toggleLike } = useLikes(user?.id);
+  const { updateProject, deleteProject } = useProjects();
   
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isOwner = user?.id === project?.user_id;
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -93,6 +114,62 @@ const ProjectDetail = () => {
 
   const username = user?.user_metadata?.username || user?.email?.split("@")[0];
   const likeData = projectId ? getLikeData(projectId) : { count: 0, hasLiked: false };
+
+  const handleEditSubmit = async (id: string, data: {
+    title: string;
+    description: string;
+    screenshot?: string;
+    repoUrl?: string;
+    liveUrl?: string;
+    lookingForContributors: boolean;
+    tags: string[];
+  }) => {
+    const success = await updateProject(id, {
+      title: data.title,
+      description: data.description,
+      screenshot: data.screenshot,
+      repoUrl: data.repoUrl,
+      liveUrl: data.liveUrl,
+      lookingForContributors: data.lookingForContributors,
+      tags: data.tags,
+    });
+
+    if (success) {
+      toast.success("Project updated successfully");
+      // Refresh project data
+      const { data: updatedProject } = await supabase
+        .from("projects")
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            avatar_url
+          )
+        `)
+        .eq("id", id)
+        .single();
+      if (updatedProject) {
+        setProject(updatedProject);
+      }
+    } else {
+      toast.error("Failed to update project");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!projectId) return;
+    
+    setIsDeleting(true);
+    const success = await deleteProject(projectId);
+    setIsDeleting(false);
+
+    if (success) {
+      toast.success("Project deleted successfully");
+      navigate("/");
+    } else {
+      toast.error("Failed to delete project");
+    }
+  };
 
   if (loading) {
     return (
@@ -268,6 +345,53 @@ const ProjectDetail = () => {
             {/* Actions Card */}
             <Card>
               <CardContent className="pt-6 space-y-4">
+                {/* Owner Actions */}
+                {isOwner && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setEditDialogOpen(true)}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="flex-1">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{project.title}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {isDeleting ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Deleting...
+                              </>
+                            ) : (
+                              "Delete"
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+
                 <Button
                   variant="outline"
                   className={cn(
@@ -332,6 +456,28 @@ const ProjectDetail = () => {
       </main>
 
       <Footer />
+
+      {/* Edit Project Dialog */}
+      {project && (
+        <EditProjectDialog
+          project={{
+            id: project.id,
+            title: project.title,
+            description: project.description || "",
+            screenshot: project.screenshot_url || undefined,
+            repoUrl: project.repo_url || undefined,
+            liveUrl: project.live_url || undefined,
+            lookingForContributors: project.looking_for_contributors || false,
+            tags: project.tags || [],
+            author: project.profiles?.username || "Anonymous",
+            userId: project.user_id,
+            createdAt: new Date(project.created_at),
+          }}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSubmit={handleEditSubmit}
+        />
+      )}
     </div>
   );
 };
