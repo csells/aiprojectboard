@@ -51,6 +51,12 @@ const resourceTemplates = [
     description: "Get details of a specific project by ID",
     mimeType: "application/json",
   },
+  {
+    uriTemplate: "profile://{id}",
+    name: "Profile Details",
+    description: "Get details of a specific user profile by ID",
+    mimeType: "application/json",
+  },
 ];
 
 // Tool definitions (read-only operations)
@@ -120,6 +126,65 @@ const tools = [
       properties: {},
     },
   },
+  {
+    name: "get_profile",
+    description: "Get detailed information about a user profile",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The profile/user ID",
+        },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "list_profiles",
+    description: "List user profiles with optional pagination",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "Maximum number of profiles to return (default: 50, max: 100)",
+        },
+        offset: {
+          type: "number",
+          description: "Number of profiles to skip for pagination",
+        },
+      },
+    },
+  },
+  {
+    name: "get_profile_projects",
+    description: "Get all project IDs created by a specific profile/user",
+    inputSchema: {
+      type: "object",
+      properties: {
+        profile_id: {
+          type: "string",
+          description: "The profile/user ID",
+        },
+      },
+      required: ["profile_id"],
+    },
+  },
+  {
+    name: "get_project_profile",
+    description: "Get the profile ID of the user who created a specific project",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_id: {
+          type: "string",
+          description: "The project ID",
+        },
+      },
+      required: ["project_id"],
+    },
+  },
 ];
 
 // Handle MCP initialize
@@ -155,15 +220,22 @@ function handleToolsList(id: string | number | undefined): JsonRpcResponse {
 async function handleResourcesList(id: string | number | undefined): Promise<JsonRpcResponse> {
   console.log("Handling resources/list request");
   
-  // Return a list of available project resources
-  const { data: projects, error } = await supabase
-    .from("projects")
-    .select("id, title")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  // Return a list of available project and profile resources
+  const [projectsResult, profilesResult] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, title")
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("profiles")
+      .select("id, username")
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ]);
 
-  if (error) {
-    console.error("Error fetching projects:", error);
+  if (projectsResult.error || profilesResult.error) {
+    console.error("Error fetching resources:", projectsResult.error || profilesResult.error);
     return {
       jsonrpc: "2.0",
       id,
@@ -174,10 +246,17 @@ async function handleResourcesList(id: string | number | undefined): Promise<Jso
     };
   }
 
-  const resources = projects?.map((p) => ({
+  const projectResources = projectsResult.data?.map((p) => ({
     uri: `project://${p.id}`,
     name: p.title,
     description: `Project: ${p.title}`,
+    mimeType: "application/json",
+  })) || [];
+
+  const profileResources = profilesResult.data?.map((p) => ({
+    uri: `profile://${p.id}`,
+    name: p.username || "Anonymous",
+    description: `Profile: ${p.username || "Anonymous"}`,
     mimeType: "application/json",
   })) || [];
 
@@ -185,7 +264,7 @@ async function handleResourcesList(id: string | number | undefined): Promise<Jso
     jsonrpc: "2.0",
     id,
     result: {
-      resources,
+      resources: [...projectResources, ...profileResources],
     },
   };
 }
@@ -209,48 +288,118 @@ async function handleResourcesRead(
 ): Promise<JsonRpcResponse> {
   console.log("Handling resources/read request for:", params.uri);
 
-  const match = params.uri.match(/^project:\/\/(.+)$/);
-  if (!match) {
+  // Check for project URI
+  const projectMatch = params.uri.match(/^project:\/\/(.+)$/);
+  if (projectMatch) {
+    const projectId = projectMatch[1];
+    const { data: project, error } = await supabase
+      .from("projects")
+      .select(`
+        id,
+        title,
+        description,
+        screenshot_url,
+        repo_url,
+        live_url,
+        looking_for_contributors,
+        tags,
+        created_at,
+        updated_at,
+        user_id,
+        profiles!projects_user_id_fkey (
+          id,
+          username,
+          avatar_url
+        )
+      `)
+      .eq("id", projectId)
+      .maybeSingle();
+
+    if (error || !project) {
+      return {
+        jsonrpc: "2.0",
+        id,
+        error: {
+          code: -32602,
+          message: "Project not found",
+        },
+      };
+    }
+
     return {
       jsonrpc: "2.0",
       id,
-      error: {
-        code: -32602,
-        message: "Invalid resource URI format",
+      result: {
+        contents: [
+          {
+            uri: params.uri,
+            mimeType: "application/json",
+            text: JSON.stringify({
+              ...project,
+              profile_id: project.user_id,
+            }, null, 2),
+          },
+        ],
       },
     };
   }
 
-  const projectId = match[1];
-  const { data: project, error } = await supabase
-    .from("projects")
-    .select(`
-      id,
-      title,
-      description,
-      screenshot_url,
-      repo_url,
-      live_url,
-      looking_for_contributors,
-      tags,
-      created_at,
-      updated_at,
-      profiles!projects_user_id_fkey (
-        id,
-        username,
-        avatar_url
-      )
-    `)
-    .eq("id", projectId)
-    .single();
+  // Check for profile URI
+  const profileMatch = params.uri.match(/^profile:\/\/(.+)$/);
+  if (profileMatch) {
+    const profileId = profileMatch[1];
+    
+    const [profileResult, projectsResult] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select(`
+          id,
+          username,
+          avatar_url,
+          bio,
+          github_url,
+          twitter_url,
+          linkedin_url,
+          facebook_url,
+          substack_url,
+          website_url,
+          created_at
+        `)
+        .eq("id", profileId)
+        .maybeSingle(),
+      supabase
+        .from("projects")
+        .select("id")
+        .eq("user_id", profileId),
+    ]);
 
-  if (error || !project) {
+    if (profileResult.error || !profileResult.data) {
+      return {
+        jsonrpc: "2.0",
+        id,
+        error: {
+          code: -32602,
+          message: "Profile not found",
+        },
+      };
+    }
+
+    const projectIds = projectsResult.data?.map((p) => p.id) || [];
+
     return {
       jsonrpc: "2.0",
       id,
-      error: {
-        code: -32602,
-        message: "Project not found",
+      result: {
+        contents: [
+          {
+            uri: params.uri,
+            mimeType: "application/json",
+            text: JSON.stringify({
+              ...profileResult.data,
+              project_ids: projectIds,
+            }, null, 2),
+          },
+        ],
       },
     };
   }
@@ -258,14 +407,9 @@ async function handleResourcesRead(
   return {
     jsonrpc: "2.0",
     id,
-    result: {
-      contents: [
-        {
-          uri: params.uri,
-          mimeType: "application/json",
-          text: JSON.stringify(project, null, 2),
-        },
-      ],
+    error: {
+      code: -32602,
+      message: "Invalid resource URI format. Use project://{id} or profile://{id}",
     },
   };
 }
@@ -524,6 +668,209 @@ async function handleToolsCall(
                 null,
                 2
               ),
+            },
+          ],
+        },
+      };
+    }
+
+    case "get_profile": {
+      if (!args.id) {
+        return {
+          jsonrpc: "2.0",
+          id,
+          error: {
+            code: -32602,
+            message: "Missing required parameter: id",
+          },
+        };
+      }
+
+      const [profileResult, projectsResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select(`
+            id,
+            username,
+            avatar_url,
+            bio,
+            github_url,
+            twitter_url,
+            linkedin_url,
+            facebook_url,
+            substack_url,
+            website_url,
+            created_at
+          `)
+          .eq("id", args.id)
+          .maybeSingle(),
+        supabase
+          .from("projects")
+          .select("id, title")
+          .eq("user_id", args.id),
+      ]);
+
+      if (profileResult.error || !profileResult.data) {
+        return {
+          jsonrpc: "2.0",
+          id,
+          error: {
+            code: -32602,
+            message: "Profile not found",
+          },
+        };
+      }
+
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  ...profileResult.data,
+                  projects: projectsResult.data || [],
+                  project_count: projectsResult.data?.length || 0,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        },
+      };
+    }
+
+    case "list_profiles": {
+      const limit = Math.min(Number(args.limit) || 50, 100);
+      const offset = Number(args.offset) || 0;
+
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select(`
+          id,
+          username,
+          avatar_url,
+          bio,
+          created_at
+        `)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        console.error("Error in list_profiles:", error);
+        return {
+          jsonrpc: "2.0",
+          id,
+          error: {
+            code: -32603,
+            message: "Failed to fetch profiles",
+          },
+        };
+      }
+
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ profiles, count: profiles?.length || 0 }, null, 2),
+            },
+          ],
+        },
+      };
+    }
+
+    case "get_profile_projects": {
+      if (!args.profile_id) {
+        return {
+          jsonrpc: "2.0",
+          id,
+          error: {
+            code: -32602,
+            message: "Missing required parameter: profile_id",
+          },
+        };
+      }
+
+      const { data: projects, error } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("user_id", args.profile_id);
+
+      if (error) {
+        console.error("Error in get_profile_projects:", error);
+        return {
+          jsonrpc: "2.0",
+          id,
+          error: {
+            code: -32603,
+            message: "Failed to fetch projects",
+          },
+        };
+      }
+
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                profile_id: args.profile_id,
+                project_ids: projects?.map((p) => p.id) || [],
+              }, null, 2),
+            },
+          ],
+        },
+      };
+    }
+
+    case "get_project_profile": {
+      if (!args.project_id) {
+        return {
+          jsonrpc: "2.0",
+          id,
+          error: {
+            code: -32602,
+            message: "Missing required parameter: project_id",
+          },
+        };
+      }
+
+      const { data: project, error } = await supabase
+        .from("projects")
+        .select("user_id")
+        .eq("id", args.project_id)
+        .maybeSingle();
+
+      if (error || !project) {
+        return {
+          jsonrpc: "2.0",
+          id,
+          error: {
+            code: -32602,
+            message: "Project not found",
+          },
+        };
+      }
+
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                project_id: args.project_id,
+                profile_id: project.user_id,
+              }, null, 2),
             },
           ],
         },
