@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.mcp-server]
 verify_jwt = false
+
+[functions.notify-comment]
+verify_jwt = false
