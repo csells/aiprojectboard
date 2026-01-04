@@ -65,16 +65,29 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
     }
 
     // Check if script already exists
-    if (document.querySelector('script[src*="turnstile"]')) {
-      setTurnstileLoaded(true);
+    const existingScript = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+    if (existingScript) {
+      // Script exists, check if turnstile is available
+      if (window.turnstile) {
+        setTurnstileLoaded(true);
+      } else {
+        // Wait for it to load
+        existingScript.addEventListener('load', () => setTurnstileLoaded(true));
+      }
       return;
     }
 
     const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
     script.defer = true;
-    script.onload = () => setTurnstileLoaded(true);
+    script.onload = () => {
+      console.log("Turnstile script loaded");
+      setTurnstileLoaded(true);
+    };
+    script.onerror = () => {
+      console.error("Failed to load Turnstile script");
+    };
     document.head.appendChild(script);
 
     return () => {
@@ -87,40 +100,74 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
 
   // Render Turnstile widget when dialog opens
   useEffect(() => {
-    if (!isOpen || !turnstileLoaded || !turnstileRef.current || !TURNSTILE_SITE_KEY) return;
-    if (!window.turnstile) return;
-
+    if (!isOpen || !TURNSTILE_SITE_KEY) return;
+    
+    // Reset token when dialog opens
+    setTurnstileToken("");
+    
     // Clean up previous widget
-    if (widgetIdRef.current) {
-      window.turnstile.remove(widgetIdRef.current);
+    if (widgetIdRef.current && window.turnstile) {
+      try {
+        window.turnstile.remove(widgetIdRef.current);
+      } catch (e) {
+        console.warn("Error removing turnstile widget:", e);
+      }
       widgetIdRef.current = null;
     }
 
-    // Reset token
-    setTurnstileToken("");
-
-    // Small delay to ensure DOM is ready
-    const timeout = setTimeout(() => {
-      if (turnstileRef.current && window.turnstile) {
+    // Function to render the widget
+    const renderWidget = () => {
+      if (!turnstileRef.current || !window.turnstile) return false;
+      
+      try {
+        console.log("Rendering Turnstile widget");
         widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
           callback: (token: string) => {
+            console.log("Turnstile verified");
             setTurnstileToken(token);
           },
           "error-callback": () => {
+            console.error("Turnstile error");
             setTurnstileToken("");
             toast.error("CAPTCHA verification failed. Please try again.");
           },
           "expired-callback": () => {
+            console.log("Turnstile expired");
             setTurnstileToken("");
           },
           theme: "dark",
           size: "normal",
         });
+        return true;
+      } catch (e) {
+        console.error("Error rendering turnstile:", e);
+        return false;
       }
-    }, 100);
+    };
 
-    return () => clearTimeout(timeout);
+    // Try to render immediately if loaded, otherwise wait
+    if (turnstileLoaded && window.turnstile) {
+      // Small delay to ensure DOM is ready
+      const timeout = setTimeout(renderWidget, 200);
+      return () => clearTimeout(timeout);
+    } else {
+      // Poll for turnstile to be available
+      let attempts = 0;
+      const maxAttempts = 20;
+      const interval = setInterval(() => {
+        attempts++;
+        if (window.turnstile) {
+          clearInterval(interval);
+          setTurnstileLoaded(true);
+          setTimeout(renderWidget, 200);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          console.error("Turnstile failed to load after", maxAttempts, "attempts");
+        }
+      }, 250);
+      return () => clearInterval(interval);
+    }
   }, [isOpen, turnstileLoaded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
