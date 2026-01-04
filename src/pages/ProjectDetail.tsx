@@ -1,0 +1,280 @@
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { Header } from "@/components/Header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  ArrowLeft, 
+  ExternalLink, 
+  Github, 
+  Heart, 
+  Users, 
+  Calendar,
+  Loader2 
+} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useLikes } from "@/hooks/useLikes";
+import { ProjectComments } from "@/components/ProjectComments";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
+interface ProjectData {
+  id: string;
+  title: string;
+  description: string | null;
+  screenshot_url: string | null;
+  repo_url: string | null;
+  live_url: string | null;
+  looking_for_contributors: boolean | null;
+  tags: string[] | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  profiles: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
+const ProjectDetail = () => {
+  const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { getLikeData, toggleLike } = useLikes(user?.id);
+  
+  const [project, setProject] = useState<ProjectData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      if (!projectId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select(`
+            *,
+            profiles:user_id (
+              username,
+              avatar_url
+            )
+          `)
+          .eq("id", projectId)
+          .single();
+
+        if (error) throw error;
+        setProject(data);
+      } catch (err) {
+        setError("Project not found");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [projectId]);
+
+  const username = user?.user_metadata?.username || user?.email?.split("@")[0];
+  const likeData = projectId ? getLikeData(projectId) : { count: 0, hasLiked: false };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header
+          isLoggedIn={!!user}
+          userName={username}
+          onLogin={() => navigate("/auth")}
+          onLogout={signOut}
+          onNewProject={() => {}}
+        />
+        <div className="container mx-auto px-4 py-16 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header
+          isLoggedIn={!!user}
+          userName={username}
+          onLogin={() => navigate("/auth")}
+          onLogout={signOut}
+          onNewProject={() => {}}
+        />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Project not found</h1>
+          <Button onClick={() => navigate("/")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to projects
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const authorName = project.profiles?.username || "Anonymous";
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header
+        isLoggedIn={!!user}
+        userName={username}
+        onLogin={() => navigate("/auth")}
+        onLogout={signOut}
+        onNewProject={() => {}}
+      />
+
+      <main className="container mx-auto px-4 py-8">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/")}
+          className="mb-6"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to projects
+        </Button>
+
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Screenshot */}
+            {project.screenshot_url && (
+              <div className="overflow-hidden rounded-xl border border-border">
+                <img
+                  src={project.screenshot_url}
+                  alt={project.title}
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            )}
+
+            {/* Title & Meta */}
+            <div>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
+                  {project.title}
+                </h1>
+                {project.looking_for_contributors && (
+                  <Badge variant="contributor" className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    Looking for contributors
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+                <Link 
+                  to={`/profile/${project.user_id}`}
+                  className="hover:text-primary transition-colors"
+                >
+                  by {authorName}
+                </Link>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  {format(new Date(project.created_at), "MMM d, yyyy")}
+                </span>
+              </div>
+            </div>
+
+            {/* Tags */}
+            {project.tags && project.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {project.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Description */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                  <ReactMarkdown>{project.description || "No description provided."}</ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Comments Section */}
+            <Card>
+              <CardContent className="pt-6">
+                <h2 className="text-lg font-semibold mb-4">Comments</h2>
+                <ProjectComments
+                  projectId={project.id}
+                  userId={user?.id}
+                  isExpanded={true}
+                  onToggle={() => {}}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {/* Actions Card */}
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start gap-2",
+                    likeData.hasLiked && "text-red-500 border-red-500/50"
+                  )}
+                  onClick={() => projectId && toggleLike(projectId)}
+                >
+                  <Heart className={cn("h-4 w-4", likeData.hasLiked && "fill-current")} />
+                  {likeData.count > 0 ? `${likeData.count} Likes` : "Like this project"}
+                </Button>
+
+                {project.live_url && (
+                  <Button asChild className="w-full">
+                    <a href={project.live_url} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      View Live Demo
+                    </a>
+                  </Button>
+                )}
+
+                {project.repo_url && (
+                  <Button variant="outline" asChild className="w-full">
+                    <a href={project.repo_url} target="_blank" rel="noopener noreferrer">
+                      <Github className="mr-2 h-4 w-4" />
+                      View Source Code
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Author Card */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Created by</h3>
+                <Link 
+                  to={`/profile/${project.user_id}`}
+                  className="flex items-center gap-3 hover:bg-secondary/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-semibold">
+                    {authorName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium text-foreground">{authorName}</span>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default ProjectDetail;
