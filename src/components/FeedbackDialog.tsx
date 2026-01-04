@@ -69,22 +69,28 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
     if (existingScript) {
       // Script exists, check if turnstile is available
       if (window.turnstile) {
+        console.log("Turnstile already loaded and available");
         setTurnstileLoaded(true);
       } else {
-        // Wait for it to load
-        existingScript.addEventListener('load', () => setTurnstileLoaded(true));
+        // Wait for it to load using onTurnstileLoad callback
+        (window as any).onTurnstileLoad = () => {
+          console.log("Turnstile loaded via callback");
+          setTurnstileLoaded(true);
+        };
       }
       return;
     }
 
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      console.log("Turnstile script loaded");
+    // Set up callback before loading script
+    (window as any).onTurnstileLoad = () => {
+      console.log("Turnstile loaded via onload callback");
       setTurnstileLoaded(true);
     };
+
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
+    script.async = true;
+    script.defer = true;
     script.onerror = () => {
       console.error("Failed to load Turnstile script");
     };
