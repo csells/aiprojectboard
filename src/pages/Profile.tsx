@@ -273,6 +273,8 @@ const Profile = () => {
 
           {isEditingProfile ? (
             <ProfileEditForm
+              userId={userId!}
+              avatarUrl={profile.avatar_url}
               initialData={{
                 username: profile.username || "",
                 bio: profile.bio || "",
@@ -285,6 +287,7 @@ const Profile = () => {
               }}
               onSave={handleSaveProfile}
               onCancel={() => setIsEditingProfile(false)}
+              onAvatarChange={(url) => setProfile(prev => prev ? { ...prev, avatar_url: url } : null)}
             />
           ) : (
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">

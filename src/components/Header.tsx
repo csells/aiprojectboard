@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Plus, LogIn, LogOut, Sparkles } from "lucide-react";
 
 interface HeaderProps {
@@ -24,6 +25,7 @@ export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }
         </div>
 
         <nav className="flex items-center gap-3">
+          <FeedbackDialog />
           {isLoggedIn ? (
             <>
               <span className="hidden text-sm text-muted-foreground sm:inline">
