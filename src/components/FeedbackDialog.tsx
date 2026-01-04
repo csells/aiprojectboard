@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, ReactNode } from "react";
+import { useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Lightbulb, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 // Cloudflare Turnstile site key (public key, safe to embed)
 const TURNSTILE_SITE_KEY = "0x4AAAAAAACKeAgxMCFbui95I";
@@ -24,23 +25,6 @@ interface FeedbackDialogProps {
   trigger?: ReactNode;
 }
 
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: string | HTMLElement, options: {
-        sitekey: string;
-        callback: (token: string) => void;
-        "error-callback"?: () => void;
-        "expired-callback"?: () => void;
-        theme?: "light" | "dark" | "auto";
-        size?: "normal" | "compact";
-      }) => string;
-      reset: (widgetId: string) => void;
-      remove: (widgetId: string) => void;
-    };
-  }
-}
-
 export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
@@ -48,146 +32,12 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
   // Use controlled or uncontrolled mode
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
   const setIsOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
-
-  // Load Turnstile script
-  useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) {
-      console.warn("TURNSTILE_SITE_KEY not configured");
-      return;
-    }
-
-    // Check if script already exists
-    const existingScript = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
-    if (existingScript) {
-      // Script exists, check if turnstile is available
-      if (window.turnstile) {
-        console.log("Turnstile already loaded and available");
-        setTurnstileLoaded(true);
-      } else {
-        // Wait for it to load using onTurnstileLoad callback
-        (window as any).onTurnstileLoad = () => {
-          console.log("Turnstile loaded via callback");
-          setTurnstileLoaded(true);
-        };
-      }
-      return;
-    }
-
-    // Set up callback before loading script
-    (window as any).onTurnstileLoad = () => {
-      console.log("Turnstile loaded via onload callback");
-      setTurnstileLoaded(true);
-    };
-
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => {
-      console.error("Failed to load Turnstile script");
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      // Clean up widget on unmount
-      if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current);
-      }
-    };
-  }, []);
-
-  // Render Turnstile widget when dialog opens
-  useEffect(() => {
-    if (!isOpen || !TURNSTILE_SITE_KEY) return;
-    
-    // Reset token when dialog opens
-    setTurnstileToken("");
-    
-    // Clean up previous widget
-    if (widgetIdRef.current && window.turnstile) {
-      try {
-        window.turnstile.remove(widgetIdRef.current);
-      } catch (e) {
-        console.warn("Error removing turnstile widget:", e);
-      }
-      widgetIdRef.current = null;
-    }
-
-    // Function to render the widget
-    const renderWidget = () => {
-      if (!turnstileRef.current) {
-        console.error("Turnstile container ref not available");
-        return false;
-      }
-      
-      if (!window.turnstile) {
-        console.error("Turnstile not available on window");
-        return false;
-      }
-      
-      // Clear any existing content in the container
-      turnstileRef.current.innerHTML = '';
-      
-      try {
-        console.log("Rendering Turnstile widget to container", turnstileRef.current);
-        widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          callback: (token: string) => {
-            console.log("Turnstile verified successfully");
-            setTurnstileToken(token);
-          },
-          "error-callback": () => {
-            console.error("Turnstile error callback triggered");
-            setTurnstileToken("");
-          },
-          "expired-callback": () => {
-            console.log("Turnstile token expired");
-            setTurnstileToken("");
-          },
-          theme: "auto",
-          size: "compact",
-        });
-        console.log("Turnstile widget created with ID:", widgetIdRef.current);
-        return true;
-      } catch (e) {
-        console.error("Error rendering turnstile:", e);
-        return false;
-      }
-    };
-
-    // Use a longer delay and ensure DOM is ready
-    const timeout = setTimeout(() => {
-      if (window.turnstile) {
-        renderWidget();
-      } else {
-        // If turnstile isn't loaded yet, poll for it
-        let attempts = 0;
-        const maxAttempts = 40; // 10 seconds
-        const interval = setInterval(() => {
-          attempts++;
-          console.log("Polling for turnstile, attempt", attempts);
-          if (window.turnstile) {
-            clearInterval(interval);
-            setTurnstileLoaded(true);
-            renderWidget();
-          } else if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            console.error("Turnstile failed to load after", maxAttempts, "attempts");
-          }
-        }, 250);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,15 +78,22 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
     } catch (error: any) {
       console.error("Feedback error:", error);
       
-      // Reset CAPTCHA on error
-      if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.reset(widgetIdRef.current);
-        setTurnstileToken("");
-      }
+      // Reset CAPTCHA on error by incrementing key
+      setTurnstileKey(prev => prev + 1);
+      setTurnstileToken("");
       
       toast.error(error.message || "Failed to send suggestion. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setIsOpen(newOpen);
+    if (newOpen) {
+      // Reset turnstile when dialog opens
+      setTurnstileToken("");
+      setTurnstileKey(prev => prev + 1);
     }
   };
 
@@ -248,7 +105,7 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
@@ -294,9 +151,28 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
           </div>
           
           {/* Cloudflare Turnstile CAPTCHA */}
-          {TURNSTILE_SITE_KEY && (
+          {TURNSTILE_SITE_KEY && isOpen && (
             <div className="flex justify-center">
-              <div ref={turnstileRef} />
+              <Turnstile
+                key={turnstileKey}
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => {
+                  console.log("Turnstile verified successfully");
+                  setTurnstileToken(token);
+                }}
+                onError={() => {
+                  console.error("Turnstile error");
+                  setTurnstileToken("");
+                }}
+                onExpire={() => {
+                  console.log("Turnstile token expired");
+                  setTurnstileToken("");
+                }}
+                options={{
+                  theme: "auto",
+                  size: "normal",
+                }}
+              />
             </div>
           )}
           
