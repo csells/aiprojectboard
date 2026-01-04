@@ -66,32 +66,24 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Authentication check - require valid user
+    // Optional authentication - try to get user if available, but allow anonymous
+    let userId = 'anonymous';
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.log('No authorization header provided');
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    
+    if (authHeader) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userId = user.id;
+      }
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.log('Invalid authentication:', authError?.message);
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log('Authenticated user:', user.id);
+    console.log('Submission from user:', userId);
 
     // Parse and validate input
     const rawInput = await req.json();
@@ -139,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
         <h2>New Suggestion Received</h2>
         <p><strong>From:</strong> ${safeName}</p>
         <p><strong>Reply to:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
-        <p><strong>User ID:</strong> ${user.id}</p>
+        <p><strong>User ID:</strong> ${userId}</p>
         <hr />
         <p><strong>Message:</strong></p>
         <p>${safeMessage.replace(/\n/g, "<br>")}</p>
