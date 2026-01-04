@@ -255,10 +255,10 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>{profile.username || "User"} | AI Builders Community</title>
-        <meta name="description" content={`View ${profile.username || "User"}'s profile and AI projects on AI Builders Community.${profile.bio ? ` ${profile.bio}` : ""}`} />
-        <meta name="keywords" content={`${profile.username}, AI projects, developer, AI Builders`} />
-        <meta property="og:title" content={`${profile.username || "User"} | AI Builders Community`} />
+        <title>{profile.username || "User"} | AI Project Board</title>
+        <meta name="description" content={`View ${profile.username || "User"}'s profile and AI projects on AI Project Board.${profile.bio ? ` ${profile.bio}` : ""}`} />
+        <meta name="keywords" content={`${profile.username}, AI projects, developer, AI Project Board`} />
+        <meta property="og:title" content={`${profile.username || "User"} | AI Project Board`} />
         <meta property="og:description" content={`View ${profile.username || "User"}'s AI projects.`} />
         <meta property="og:type" content="profile" />
       </Helmet>

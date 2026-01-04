@@ -5,10 +5,11 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Github, Twitter, Linkedin, ExternalLink, Sparkles, Heart, MessageSquare, Server } from "lucide-react";
+import { ArrowLeft, Github, Twitter, Linkedin, ExternalLink, Sparkles, Heart, MessageSquare, Server, Copy, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import { toast } from "sonner";
 
 const About = () => {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ const About = () => {
               <Sparkles className="h-10 w-10 text-primary-foreground" />
             </div>
             <h1 className="font-serif text-4xl font-bold text-foreground sm:text-5xl">
-              About AI Builders
+              About AI Project Board
             </h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
               A community showcase for AI-powered projects built by creators around the world.
@@ -181,9 +182,23 @@ const About = () => {
                   </p>
                   <div className="bg-muted/50 rounded-lg p-4 mb-4">
                     <p className="text-sm text-muted-foreground mb-2">Endpoint:</p>
-                    <code className="text-sm text-foreground break-all">
-                      https://aiprojectboard.com/functions/v1/mcp-server
-                    </code>
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm text-foreground break-all flex-1">
+                        https://aiprojectboard.com/functions/v1/mcp-server
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 h-8 w-8 p-0"
+                        onClick={() => {
+                          navigator.clipboard.writeText("https://aiprojectboard.com/functions/v1/mcp-server");
+                          toast.success("Copied to clipboard!");
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                        <span className="sr-only">Copy endpoint URL</span>
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-muted-foreground text-sm mb-4">
                     Available tools: <span className="font-mono text-foreground">list_projects</span>, <span className="font-mono text-foreground">get_project</span>, <span className="font-mono text-foreground">search_projects</span>, <span className="font-mono text-foreground">get_profile</span>, <span className="font-mono text-foreground">list_profiles</span>, and more.

@@ -16,12 +16,12 @@ const Privacy = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>Privacy Policy | AI Builders Community</title>
-        <meta name="description" content="Learn how AI Builders Community collects, uses, and protects your personal information." />
-        <meta name="keywords" content="privacy policy, data protection, AI Builders, security, GDPR" />
-        <link rel="canonical" href="https://aibuilders.community/privacy" />
-        <meta property="og:title" content="Privacy Policy | AI Builders Community" />
-        <meta property="og:description" content="Learn how AI Builders Community protects your personal information." />
+        <title>Privacy Policy | AI Project Board</title>
+        <meta name="description" content="Learn how AI Project Board collects, uses, and protects your personal information." />
+        <meta name="keywords" content="privacy policy, data protection, AI Project Board, security, GDPR" />
+        <link rel="canonical" href="https://aiprojectboard.com/privacy" />
+        <meta property="og:title" content="Privacy Policy | AI Project Board" />
+        <meta property="og:description" content="Learn how AI Project Board protects your personal information." />
         <meta property="og:type" content="website" />
       </Helmet>
 

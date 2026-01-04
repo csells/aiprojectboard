@@ -16,12 +16,12 @@ const Terms = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>Terms of Service | AI Builders Community</title>
-        <meta name="description" content="Read the Terms of Service for AI Builders Community. Understand your rights and responsibilities when using our platform." />
-        <meta name="keywords" content="terms of service, legal, AI Builders, user agreement" />
-        <link rel="canonical" href="https://aibuilders.community/terms" />
-        <meta property="og:title" content="Terms of Service | AI Builders Community" />
-        <meta property="og:description" content="Read the Terms of Service for AI Builders Community." />
+        <title>Terms of Service | AI Project Board</title>
+        <meta name="description" content="Read the Terms of Service for AI Project Board. Understand your rights and responsibilities when using our platform." />
+        <meta name="keywords" content="terms of service, legal, AI Project Board, user agreement" />
+        <link rel="canonical" href="https://aiprojectboard.com/terms" />
+        <meta property="og:title" content="Terms of Service | AI Project Board" />
+        <meta property="og:description" content="Read the Terms of Service for AI Project Board." />
         <meta property="og:type" content="website" />
       </Helmet>
 
@@ -59,7 +59,7 @@ const Terms = () => {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-4">1. Acceptance of Terms</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  By accessing or using AI Builders Community ("the Service"), you agree to be bound by these 
+                  By accessing or using AI Project Board ("the Service"), you agree to be bound by these 
                   Terms of Service. If you do not agree to these terms, please do not use the Service.
                 </p>
               </section>
@@ -67,7 +67,7 @@ const Terms = () => {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-4">2. Description of Service</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  AI Builders Community is a platform for sharing and discovering AI-powered projects. 
+                  AI Project Board is a platform for sharing and discovering AI-powered projects. 
                   Users can create accounts, submit projects, interact with other users' projects through 
                   likes and comments, and maintain a public profile.
                 </p>

@@ -108,20 +108,20 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>AI Builders Community | Share & Discover AI Projects</title>
+        <title>AI Project Board | Share & Discover AI Projects</title>
         <meta name="description" content="A community showcase for AI builders. Share your AI agents, LLM apps, and machine learning projects. Find collaborators and get inspired." />
         <meta name="keywords" content="AI projects, machine learning, LLM, AI agents, open source, community, builders" />
-        <link rel="canonical" href="https://ai-builders.lovable.app/" />
+        <link rel="canonical" href="https://aiprojectboard.com/" />
         
         {/* Open Graph */}
-        <meta property="og:title" content="AI Builders Community | Share & Discover AI Projects" />
+        <meta property="og:title" content="AI Project Board | Share & Discover AI Projects" />
         <meta property="og:description" content="A community showcase for AI builders. Share your projects and find collaborators." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ai-builders.lovable.app/" />
+        <meta property="og:url" content="https://aiprojectboard.com/" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="AI Builders Community" />
+        <meta name="twitter:title" content="AI Project Board" />
         <meta name="twitter:description" content="Share your AI projects and find collaborators." />
         
         {/* Structured Data */}
@@ -129,12 +129,12 @@ const Index = () => {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            "name": "AI Builders Community",
+            "name": "AI Project Board",
             "description": "A community showcase for AI builders to share projects and find collaborators",
-            "url": "https://ai-builders.lovable.app/",
+            "url": "https://aiprojectboard.com/",
             "potentialAction": {
               "@type": "SearchAction",
-              "target": "https://ai-builders.lovable.app/?search={search_term_string}",
+              "target": "https://aiprojectboard.com/?search={search_term_string}",
               "query-input": "required name=search_term_string"
             }
           })}

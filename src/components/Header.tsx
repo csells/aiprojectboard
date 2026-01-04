@@ -37,7 +37,7 @@ export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-foreground tracking-tight">AI Builders</h1>
+            <h1 className="text-lg font-semibold text-foreground tracking-tight">AI Project Board</h1>
             <p className="text-xs text-muted-foreground">Community Showcase</p>
           </div>
         </Link>

@@ -137,16 +137,16 @@ const ProjectDetail = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>{project.title} | AI Builders Community</title>
-        <meta name="description" content={project.description || `View ${project.title} - an AI project on AI Builders Community.`} />
+        <title>{project.title} | AI Project Board</title>
+        <meta name="description" content={project.description || `View ${project.title} - an AI project on AI Project Board.`} />
         <meta name="keywords" content={`${project.title}, AI project, ${project.tags?.join(", ") || "AI"}`} />
-        <meta property="og:title" content={`${project.title} | AI Builders Community`} />
-        <meta property="og:description" content={project.description || `View ${project.title} on AI Builders Community.`} />
+        <meta property="og:title" content={`${project.title} | AI Project Board`} />
+        <meta property="og:description" content={project.description || `View ${project.title} on AI Project Board.`} />
         <meta property="og:type" content="article" />
         {project.screenshot_url && <meta property="og:image" content={project.screenshot_url} />}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${project.title} | AI Builders Community`} />
-        <meta name="twitter:description" content={project.description || `View ${project.title} on AI Builders Community.`} />
+        <meta name="twitter:title" content={`${project.title} | AI Project Board`} />
+        <meta name="twitter:description" content={project.description || `View ${project.title} on AI Project Board.`} />
         {project.screenshot_url && <meta name="twitter:image" content={project.screenshot_url} />}
       </Helmet>
 

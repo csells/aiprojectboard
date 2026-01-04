@@ -16,12 +16,12 @@ const Guidelines = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>Community Guidelines | AI Builders Community</title>
-        <meta name="description" content="Our community guidelines for AI Builders. Learn how to be a great member of our community and what we expect from all participants." />
-        <meta name="keywords" content="community guidelines, rules, AI Builders, code of conduct, community standards" />
-        <link rel="canonical" href="https://aibuilders.community/guidelines" />
-        <meta property="og:title" content="Community Guidelines | AI Builders Community" />
-        <meta property="og:description" content="Learn how to be a great member of our AI Builders community." />
+        <title>Community Guidelines | AI Project Board</title>
+        <meta name="description" content="Our community guidelines for AI Project Board. Learn how to be a great member of our community and what we expect from all participants." />
+        <meta name="keywords" content="community guidelines, rules, AI Project Board, code of conduct, community standards" />
+        <link rel="canonical" href="https://aiprojectboard.com/guidelines" />
+        <meta property="og:title" content="Community Guidelines | AI Project Board" />
+        <meta property="og:description" content="Learn how to be a great member of our AI Project Board community." />
         <meta property="og:type" content="website" />
       </Helmet>
 
