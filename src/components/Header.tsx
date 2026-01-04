@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, LogIn, Sparkles, User, LogOut, ChevronDown } from "lucide-react";
+import { Plus, LogIn, Sparkles, User, LogOut, ChevronDown, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,6 +60,10 @@ export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }
                   <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onLogout} className="cursor-pointer text-destructive focus:text-destructive">
