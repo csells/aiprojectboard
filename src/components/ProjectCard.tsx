@@ -17,8 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ExternalLink, Github, MoreVertical, Pencil, Trash2, Users } from "lucide-react";
+import { ExternalLink, Github, Heart, MoreVertical, Pencil, Trash2, Users } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 import { Project } from "@/hooks/useProjects";
 
@@ -28,9 +30,21 @@ interface ProjectCardProps {
   isOwner?: boolean;
   onEdit?: (project: Project) => void;
   onDelete?: (projectId: string) => void;
+  likeCount?: number;
+  hasLiked?: boolean;
+  onLike?: () => void;
 }
 
-export function ProjectCard({ project, style, isOwner, onEdit, onDelete }: ProjectCardProps) {
+export function ProjectCard({ 
+  project, 
+  style, 
+  isOwner, 
+  onEdit, 
+  onDelete,
+  likeCount = 0,
+  hasLiked = false,
+  onLike,
+}: ProjectCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDelete = () => {
@@ -68,7 +82,12 @@ export function ProjectCard({ project, style, isOwner, onEdit, onDelete }: Proje
               <h3 className="font-serif text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                 {project.title}
               </h3>
-              <p className="text-xs text-muted-foreground">by {project.author}</p>
+              <Link 
+                to={`/profile/${project.userId}`}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                by {project.author}
+              </Link>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               {!project.screenshot && project.lookingForContributors && (
@@ -119,19 +138,30 @@ export function ProjectCard({ project, style, isOwner, onEdit, onDelete }: Proje
         </CardContent>
 
         <CardFooter className="gap-2 border-t border-border pt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLike}
+            className={cn(
+              "gap-1.5",
+              hasLiked && "text-red-500 hover:text-red-600"
+            )}
+          >
+            <Heart className={cn("h-4 w-4", hasLiked && "fill-current")} />
+            {likeCount > 0 && <span>{likeCount}</span>}
+          </Button>
+          <div className="flex-1" />
           {project.repoUrl && (
-            <Button variant="ghost" size="sm" asChild className="flex-1">
+            <Button variant="ghost" size="sm" asChild>
               <a href={project.repoUrl} target="_blank" rel="noopener noreferrer">
                 <Github className="h-4 w-4" />
-                Repo
               </a>
             </Button>
           )}
           {project.liveUrl && (
-            <Button variant="ghost" size="sm" asChild className="flex-1">
+            <Button variant="ghost" size="sm" asChild>
               <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-4 w-4" />
-                Live
               </a>
             </Button>
           )}

@@ -11,8 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { X } from "lucide-react";
 import { Project } from "@/hooks/useProjects";
+import { ScreenshotUpload } from "./ScreenshotUpload";
 
 interface EditProjectDialogProps {
   project: Project | null;
@@ -109,39 +109,11 @@ export function EditProjectDialog({ project, open, onOpenChange, onSubmit }: Edi
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit-screenshot">Screenshot URL</Label>
-            <div className="flex gap-2">
-              <Input
-                id="edit-screenshot"
-                value={screenshot}
-                onChange={(e) => setScreenshot(e.target.value)}
-                placeholder="https://..."
-                type="url"
-                className="bg-secondary"
-              />
-              {screenshot && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setScreenshot("")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            {screenshot && (
-              <div className="mt-2 aspect-video overflow-hidden rounded-lg border border-border bg-secondary">
-                <img
-                  src={screenshot}
-                  alt="Preview"
-                  className="h-full w-full object-cover"
-                  onError={() => setScreenshot("")}
-                />
-              </div>
-            )}
-          </div>
+          <ScreenshotUpload
+            value={screenshot}
+            onChange={setScreenshot}
+            userId={project?.userId}
+          />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
