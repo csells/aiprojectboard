@@ -27,6 +27,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useLikes } from "@/hooks/useLikes";
 import { ProjectComments } from "@/components/ProjectComments";
+import { RelatedProjects } from "@/components/RelatedProjects";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -299,6 +300,12 @@ const ProjectDetail = () => {
             </Card>
           </div>
         </div>
+
+        {/* Related Projects */}
+        <RelatedProjects 
+          currentProjectId={project.id} 
+          tags={project.tags} 
+        />
       </main>
     </div>
   );
