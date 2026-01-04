@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Plus, LogIn, Sparkles, User, LogOut, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -43,7 +42,6 @@ export function Header({ isLoggedIn, userName, onLogin, onLogout, onNewProject }
         </Link>
 
         <nav className="flex items-center gap-3">
-          <FeedbackDialog />
           {isLoggedIn ? (
             <>
               <Button variant="glow" size="sm" onClick={onNewProject}>

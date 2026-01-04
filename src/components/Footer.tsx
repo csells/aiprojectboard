@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -24,6 +25,8 @@ export function Footer() {
             <Link to="/privacy" className="hover:text-primary transition-colors">
               Privacy Policy
             </Link>
+            <span className="text-border">•</span>
+            <FeedbackDialog />
           </nav>
           
           {/* Copyright */}
