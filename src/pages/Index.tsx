@@ -5,7 +5,8 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectForm } from "@/components/ProjectForm";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
-import { Sparkles, Cpu, Users, Loader2, Zap, Brain } from "lucide-react";
+import { Sparkles, Cpu, Users, Loader2, Zap, Brain, LayoutGrid } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects, Project } from "@/hooks/useProjects";
 import { useLikes } from "@/hooks/useLikes";
@@ -20,6 +21,7 @@ const Index = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [search, setSearch] = useState("");
   const [showContributorsOnly, setShowContributorsOnly] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"all" | "ai" | "contributors" | "opensource">("all");
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -31,9 +33,26 @@ const Index = () => {
 
       const matchesContributors = !showContributorsOnly || project.lookingForContributors;
 
-      return matchesSearch && matchesContributors;
+      // Apply category filter
+      let matchesCategory = true;
+      if (activeFilter === "ai") {
+        matchesCategory = project.tags.some((tag) => 
+          tag.toLowerCase().includes("ai") || 
+          tag.toLowerCase().includes("ml") || 
+          tag.toLowerCase().includes("llm") ||
+          tag.toLowerCase().includes("machine learning") ||
+          tag.toLowerCase().includes("gpt") ||
+          tag.toLowerCase().includes("agent")
+        );
+      } else if (activeFilter === "contributors") {
+        matchesCategory = project.lookingForContributors === true;
+      } else if (activeFilter === "opensource") {
+        matchesCategory = !!project.repoUrl;
+      }
+
+      return matchesSearch && matchesContributors && matchesCategory;
     });
-  }, [projects, search, showContributorsOnly]);
+  }, [projects, search, showContributorsOnly, activeFilter]);
 
   const handleNewProject = async (projectData: {
     title: string;
@@ -100,19 +119,55 @@ const Index = () => {
               Share your AI agents, LLM apps, and machine learning experiments. Find collaborators and get inspired by what builders are creating.
             </p>
             
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border">
-                <Brain className="h-5 w-5 text-primary" />
-                <span>{projects.length} AI Projects</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border">
-                <Users className="h-5 w-5 text-accent" />
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-sm">
+              <button
+                onClick={() => setActiveFilter("all")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer",
+                  activeFilter === "all"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card/50 border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                )}
+              >
+                <LayoutGrid className="h-5 w-5" />
+                <span>All Projects</span>
+              </button>
+              <button
+                onClick={() => setActiveFilter("ai")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer",
+                  activeFilter === "ai"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card/50 border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                )}
+              >
+                <Brain className="h-5 w-5" />
+                <span>{projects.filter(p => p.tags.some(t => t.toLowerCase().includes("ai") || t.toLowerCase().includes("ml") || t.toLowerCase().includes("llm"))).length} AI Projects</span>
+              </button>
+              <button
+                onClick={() => setActiveFilter("contributors")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer",
+                  activeFilter === "contributors"
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-card/50 border-border text-muted-foreground hover:border-accent/50 hover:text-foreground"
+                )}
+              >
+                <Users className="h-5 w-5" />
                 <span>{projects.filter(p => p.lookingForContributors).length} Need Collaborators</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border">
+              </button>
+              <button
+                onClick={() => setActiveFilter("opensource")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer",
+                  activeFilter === "opensource"
+                    ? "bg-yellow-500 text-yellow-950 border-yellow-500"
+                    : "bg-card/50 border-border text-muted-foreground hover:border-yellow-500/50 hover:text-foreground"
+                )}
+              >
                 <Zap className="h-5 w-5 text-yellow-500" />
-                <span>Open Source</span>
-              </div>
+                <span>{projects.filter(p => p.repoUrl).length} Open Source</span>
+              </button>
             </div>
           </div>
         </div>
