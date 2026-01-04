@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,17 +15,27 @@ import {
 import { Lightbulb, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const FeedbackDialog = () => {
-  const [open, setOpen] = useState(false);
+interface FeedbackDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: ReactNode;
+}
+
+export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Use controlled or uncontrolled mode
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const setIsOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !email.trim() || !message.trim()) {
+    if (!name.trim() || !message.trim()) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -34,7 +44,7 @@ export const FeedbackDialog = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("send-feedback", {
-        body: { name, email, message },
+        body: { name, message },
       });
 
       if (error) {
@@ -48,9 +58,8 @@ export const FeedbackDialog = () => {
 
       // Success - close dialog first, then show toast
       setName("");
-      setEmail("");
       setMessage("");
-      setOpen(false);
+      setIsOpen(false);
       toast.success("Thank you for your suggestion! We'll review it soon.");
     } catch (error: any) {
       console.error("Feedback error:", error);
@@ -60,13 +69,17 @@ export const FeedbackDialog = () => {
     }
   };
 
+  const defaultTrigger = (
+    <Button variant="outline" size="sm" className="gap-2">
+      <Lightbulb className="h-4 w-4" />
+      Suggestion Box
+    </Button>
+  );
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Lightbulb className="h-4 w-4" />
-          Suggestion Box
-        </Button>
+        {trigger || defaultTrigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -87,18 +100,7 @@ export const FeedbackDialog = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="feedback-email">Your Email</Label>
-            <Input
-              id="feedback-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="john@example.com"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="feedback-message">Your Suggestion</Label>
+            <Label htmlFor="feedback-message">Your Message</Label>
             <Textarea
               id="feedback-message"
               value={message}
@@ -114,7 +116,7 @@ export const FeedbackDialog = () => {
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}
-            Send Suggestion
+            Send Message
           </Button>
         </form>
       </DialogContent>

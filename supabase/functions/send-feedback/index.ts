@@ -10,10 +10,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Input validation schema
+// Input validation schema - email removed, not collected
 const feedbackSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
-  email: z.string().trim().email("Invalid email").max(255, "Email too long"),
   message: z.string().trim().min(1, "Message is required").max(5000, "Message too long"),
 });
 
@@ -105,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { name, email, message } = parseResult.data;
+    const { name, message } = parseResult.data;
 
     // Get the recipient email from environment
     const recipientEmail = Deno.env.get("FEEDBACK_EMAIL");
@@ -128,16 +127,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Escape user input to prevent XSS in email content
     const safeName = escapeHtml(name);
-    const safeEmail = escapeHtml(email);
     const safeMessage = escapeHtml(message);
 
-    // Send notification to admin
+    // Send notification to admin (no user email collected for privacy)
     const adminEmailResponse = await sendEmail(
       [recipientEmail],
       `New Suggestion from ${safeName}`,
       `
         <h2>New Suggestion Received</h2>
-        <p><strong>From:</strong> ${safeName} (${safeEmail})</p>
+        <p><strong>From:</strong> ${safeName}</p>
         <p><strong>User ID:</strong> ${user.id}</p>
         <hr />
         <p><strong>Message:</strong></p>
@@ -148,25 +146,6 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     console.log("Admin notification sent:", adminEmailResponse);
-
-    // Try to send confirmation to user (may fail if domain not verified - that's OK)
-    try {
-      const userEmailResponse = await sendEmail(
-        [email],
-        "Thank you for your suggestion!",
-        `
-          <h2>Thank you, ${safeName}!</h2>
-          <p>We've received your suggestion and appreciate you taking the time to share your thoughts with us.</p>
-          <p>We'll review your message and get back to you if needed.</p>
-          <br />
-          <p>Best regards,<br>The AI Builders Team</p>
-        `
-      );
-      console.log("User confirmation sent:", userEmailResponse);
-    } catch (userEmailError) {
-      // User confirmation failed (likely domain not verified) - that's OK, admin got the message
-      console.log("User confirmation email could not be sent (domain may not be verified):", userEmailError);
-    }
 
     return new Response(
       JSON.stringify({ success: true }),
