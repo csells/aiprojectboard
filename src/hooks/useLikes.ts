@@ -13,32 +13,52 @@ export function useLikes(userId: string | undefined) {
   const [loading, setLoading] = useState(true);
 
   const fetchLikes = useCallback(async () => {
-    const { data: likesData, error } = await supabase
-      .from("project_likes")
-      .select("project_id, user_id");
+    // Get aggregate like counts using security definer function (privacy-preserving)
+    const { data: countsData, error: countsError } = await supabase
+      .rpc('get_project_like_counts');
 
-    if (error) {
-      console.error("Failed to fetch likes:", error);
+    if (countsError) {
+      console.error("Failed to fetch like counts:", countsError);
+      setLoading(false);
       return;
     }
 
     const likesMap = new Map<string, LikeData>();
-    
-    likesData?.forEach((like) => {
-      const existing = likesMap.get(like.project_id);
-      if (existing) {
-        existing.count++;
-        if (like.user_id === userId) {
-          existing.hasLiked = true;
-        }
+
+    // Initialize with counts (no user exposure)
+    countsData?.forEach((item: { project_id: string; like_count: number }) => {
+      likesMap.set(item.project_id, {
+        projectId: item.project_id,
+        count: Number(item.like_count),
+        hasLiked: false,
+      });
+    });
+
+    // If user is logged in, get their own likes (RLS allows this)
+    if (userId) {
+      const { data: userLikes, error: userLikesError } = await supabase
+        .from("project_likes")
+        .select("project_id")
+        .eq("user_id", userId);
+
+      if (userLikesError) {
+        console.error("Failed to fetch user likes:", userLikesError);
       } else {
-        likesMap.set(like.project_id, {
-          projectId: like.project_id,
-          count: 1,
-          hasLiked: like.user_id === userId,
+        userLikes?.forEach((like) => {
+          const existing = likesMap.get(like.project_id);
+          if (existing) {
+            existing.hasLiked = true;
+          } else {
+            // Edge case: user liked a project that has only their like
+            likesMap.set(like.project_id, {
+              projectId: like.project_id,
+              count: 1,
+              hasLiked: true,
+            });
+          }
         });
       }
-    });
+    }
 
     setLikes(likesMap);
     setLoading(false);
