@@ -1,8 +1,10 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -133,7 +135,21 @@ const ProjectDetail = () => {
   const authorName = project.profiles?.username || "Anonymous";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Helmet>
+        <title>{project.title} | AI Builders Community</title>
+        <meta name="description" content={project.description || `View ${project.title} - an AI project on AI Builders Community.`} />
+        <meta name="keywords" content={`${project.title}, AI project, ${project.tags?.join(", ") || "AI"}`} />
+        <meta property="og:title" content={`${project.title} | AI Builders Community`} />
+        <meta property="og:description" content={project.description || `View ${project.title} on AI Builders Community.`} />
+        <meta property="og:type" content="article" />
+        {project.screenshot_url && <meta property="og:image" content={project.screenshot_url} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${project.title} | AI Builders Community`} />
+        <meta name="twitter:description" content={project.description || `View ${project.title} on AI Builders Community.`} />
+        {project.screenshot_url && <meta name="twitter:image" content={project.screenshot_url} />}
+      </Helmet>
+
       <Header
         isLoggedIn={!!user}
         userName={username}
@@ -142,7 +158,7 @@ const ProjectDetail = () => {
         onNewProject={() => {}}
       />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8">
         {/* Breadcrumb Navigation */}
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
@@ -314,6 +330,8 @@ const ProjectDetail = () => {
           tags={project.tags} 
         />
       </main>
+
+      <Footer />
     </div>
   );
 };

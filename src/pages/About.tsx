@@ -1,140 +1,161 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Sparkles, Heart, Github, Twitter, Linkedin, Mail } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Github, Twitter, Linkedin, ExternalLink, Sparkles, Heart, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const About = () => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const username = user?.user_metadata?.username || user?.email?.split("@")[0];
+
   return (
-    <>
+    <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
         <title>About | AI Builders Community</title>
-        <meta name="description" content="Learn about the AI Builders Community Showcase - a platform inspired by Nate Jones and built by Chris Sells." />
+        <meta name="description" content="Learn about AI Builders Community, a platform inspired by Nate Jones and built by Chris Sells to showcase AI-powered projects." />
+        <meta name="keywords" content="AI Builders, community, about, Chris Sells, Nate Jones, AI projects" />
+        <link rel="canonical" href="https://aibuilders.community/about" />
+        <meta property="og:title" content="About | AI Builders Community" />
+        <meta property="og:description" content="Learn about AI Builders Community, a platform inspired by Nate Jones and built by Chris Sells." />
+        <meta property="og:type" content="website" />
       </Helmet>
-      
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground tracking-tight">AI Builders</h1>
-                <p className="text-xs text-muted-foreground">Community Showcase</p>
-              </div>
-            </Link>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Projects
-              </Link>
-            </Button>
-          </div>
-        </header>
 
-        <main className="container mx-auto px-4 py-12 max-w-3xl">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">About AI Builders</h1>
-            <p className="text-lg text-muted-foreground">
-              A community showcase for AI projects and builders
+      <Header
+        isLoggedIn={!!user}
+        userName={username}
+        onLogin={() => navigate("/auth")}
+        onLogout={signOut}
+        onNewProject={() => navigate("/")}
+      />
+
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <Button asChild variant="ghost" size="sm" className="mb-8">
+          <Link to="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Projects
+          </Link>
+        </Button>
+
+        <div className="max-w-3xl mx-auto space-y-12">
+          {/* Hero Section */}
+          <div className="text-center">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent">
+              <Sparkles className="h-10 w-10 text-primary-foreground" />
+            </div>
+            <h1 className="font-serif text-4xl font-bold text-foreground sm:text-5xl">
+              About AI Builders
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
+              A community showcase for AI-powered projects built by creators around the world.
             </p>
           </div>
 
-          <div className="prose prose-invert mx-auto space-y-8">
-            {/* Inspiration Section */}
-            <section className="rounded-xl border border-border bg-card p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Heart className="h-6 w-6 text-primary" />
-                Inspiration
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                This project was inspired by{" "}
-                <a 
-                  href="https://natejones.substack.com/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  Nate Jones of Nate's Substack
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-                , who has built an amazing community of AI builders and enthusiasts sharing their projects and learnings.
-              </p>
-              <p className="text-muted-foreground">
-                The goal is to create a dedicated space where community members can showcase their AI projects, 
-                find collaborators, and get inspired by what others are building.
-              </p>
-            </section>
+          {/* Inspiration Section */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Heart className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground mb-4">The Inspiration</h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    This project was inspired by{" "}
+                    <a 
+                      href="https://natesjokes.substack.com/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+                    >
+                      Nate Jones of Nate's Substack
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    , who created a space for showcasing creative AI projects. His vision of bringing 
+                    together AI builders and their work sparked the idea for this community platform 
+                    where creators can share, discover, and collaborate on AI-powered projects.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Builder Section */}
-            <section className="rounded-xl border border-border bg-card p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">Built By</h2>
-              <div className="flex flex-col sm:flex-row items-start gap-6">
-                <div className="flex-shrink-0">
+          {/* Builder Section */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-semibold text-foreground mb-6">The Builder</h2>
+              
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                <div className="shrink-0">
                   <img 
-                    src="https://cdn.blot.im/blog_12688eba996c4a98b1ec3a945e78e4f1/_avatars/2daebd98-55ac-4462-b80d-a1bb7156ce67.jpg"
+                    src="https://cdn.blot.im/blog_12688eba996c4a98b1ec3a945e78e4f1/_avatars/2daebd98-55ac-4462-b80d-a1bb7156ce67.jpg" 
                     alt="Chris Sells"
-                    className="w-24 h-24 rounded-full border-2 border-primary/30"
+                    className="w-24 h-24 rounded-full object-cover border-2 border-border"
                   />
                 </div>
+                
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Chris Sells</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Chris is a consultant in applied AI for developer tools, frameworks and ecosystems. 
-                    He's the founder and chief proprietor of sellsbrothers.com, which has been around since 1995.
+                  <h3 className="text-xl font-semibold text-foreground">Chris Sells</h3>
+                  <p className="text-muted-foreground mt-1 mb-4">
+                    Founder & Chief Proprietor, Sells Brothers, Inc.
                   </p>
-                  <div className="flex flex-wrap gap-3">
-                    <a 
-                      href="https://sellsbrothers.com/about" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-secondary text-sm text-foreground hover:border-primary/50 transition-colors"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Website
-                    </a>
-                    <a 
-                      href="https://github.com/csells" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-secondary text-sm text-foreground hover:border-primary/50 transition-colors"
-                    >
-                      <Github className="h-4 w-4" />
-                      GitHub
-                    </a>
-                    <a 
-                      href="https://twitter.com/csells" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-secondary text-sm text-foreground hover:border-primary/50 transition-colors"
-                    >
-                      <Twitter className="h-4 w-4" />
-                      Twitter
-                    </a>
-                    <a 
-                      href="https://linkedin.com/in/csells" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-secondary text-sm text-foreground hover:border-primary/50 transition-colors"
-                    >
-                      <Linkedin className="h-4 w-4" />
-                      LinkedIn
-                    </a>
-                    <a 
-                      href="mailto:csells@sellsbrothers.com"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-secondary text-sm text-foreground hover:border-primary/50 transition-colors"
-                    >
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </a>
+                  
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    Chris is a consultant in applied AI for developer tools, frameworks and ecosystems, 
+                    as well as a Flutter fanatic. He's been building and writing about technology 
+                    since 1995, sharing insights on everything from fun internet finds to interview 
+                    tips to tools he's built.
+                  </p>
+                  
+                  <p className="text-muted-foreground leading-relaxed mb-6">
+                    This site represents his personal views and opinions and was built as a 
+                    passion project to help connect AI builders with their community.
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="https://sellsbrothers.com" target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Website
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="https://github.com/csells" target="_blank" rel="noopener noreferrer">
+                        <Github className="mr-2 h-4 w-4" />
+                        GitHub
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="https://twitter.com/csells" target="_blank" rel="noopener noreferrer">
+                        <Twitter className="mr-2 h-4 w-4" />
+                        Twitter
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="https://linkedin.com/in/csells" target="_blank" rel="noopener noreferrer">
+                        <Linkedin className="mr-2 h-4 w-4" />
+                        LinkedIn
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="mailto:csells@sellsbrothers.com">
+                        <Mail className="mr-2 h-4 w-4" />
+                        Email
+                      </a>
+                    </Button>
                   </div>
                 </div>
               </div>
-            </section>
+            </CardContent>
+          </Card>
 
-            {/* Tech Stack */}
-            <section className="rounded-xl border border-border bg-card p-6">
+          {/* Technology Section */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-8">
               <h2 className="text-2xl font-semibold text-foreground mb-4">Technology</h2>
               <p className="text-muted-foreground mb-4">
                 This project is built with modern web technologies:
@@ -145,21 +166,28 @@ const About = () => {
                 <li>Lovable Cloud for backend services</li>
                 <li>Built with ❤️ using Lovable</li>
               </ul>
-            </section>
-          </div>
-        </main>
+            </CardContent>
+          </Card>
 
-        {/* Footer */}
-        <footer className="border-t border-border bg-card/30 py-8 mt-12">
-          <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-            <p className="flex items-center justify-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              AI Builders Community Showcase
-            </p>
-          </div>
-        </footer>
-      </div>
-    </>
+          {/* Contact Section */}
+          <Card className="overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5">
+            <CardContent className="p-8 text-center">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">Get in Touch</h2>
+              <p className="text-muted-foreground mb-6">
+                Have questions, suggestions, or want to connect? We'd love to hear from you.
+              </p>
+              <Button asChild>
+                <a href="mailto:csells@sellsbrothers.com">
+                  Contact Chris
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 };
 

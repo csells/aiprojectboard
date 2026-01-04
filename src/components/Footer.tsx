@@ -1,16 +1,13 @@
 import { Link } from "react-router-dom";
-import { Sparkles } from "lucide-react";
 
 export function Footer() {
+  const currentYear = new Date().getFullYear();
+  
   return (
     <footer className="border-t border-border bg-card/30 py-8">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Sparkles className="h-4 w-4 text-primary" />
-            AI Builders Community Showcase
-          </p>
-          
+        <div className="flex flex-col gap-6">
+          {/* Navigation Links */}
           <nav className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
             <Link to="/about" className="hover:text-primary transition-colors">
               About
@@ -28,6 +25,16 @@ export function Footer() {
               Privacy Policy
             </Link>
           </nav>
+          
+          {/* Copyright */}
+          <div className="text-center text-xs text-muted-foreground space-y-1">
+            <p>
+              © Copyright Sells Brothers, Inc. {currentYear}. All rights reserved.
+            </p>
+            <p>
+              No warranties extended or implied.
+            </p>
+          </div>
         </div>
       </div>
     </footer>

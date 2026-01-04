@@ -1,167 +1,185 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Privacy = () => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const username = user?.user_metadata?.username || user?.email?.split("@")[0];
+
   return (
-    <>
+    <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
         <title>Privacy Policy | AI Builders Community</title>
-        <meta name="description" content="Privacy Policy for the AI Builders Community Showcase platform." />
+        <meta name="description" content="Learn how AI Builders Community collects, uses, and protects your personal information." />
+        <meta name="keywords" content="privacy policy, data protection, AI Builders, security, GDPR" />
+        <link rel="canonical" href="https://aibuilders.community/privacy" />
+        <meta property="og:title" content="Privacy Policy | AI Builders Community" />
+        <meta property="og:description" content="Learn how AI Builders Community protects your personal information." />
+        <meta property="og:type" content="website" />
       </Helmet>
-      
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground tracking-tight">AI Builders</h1>
-                <p className="text-xs text-muted-foreground">Community Showcase</p>
-              </div>
-            </Link>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Projects
-              </Link>
-            </Button>
-          </div>
-        </header>
 
-        <main className="container mx-auto px-4 py-12 max-w-3xl">
-          <h1 className="text-4xl font-bold text-foreground mb-8">Privacy Policy</h1>
-          
-          <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground">
-            <p className="text-lg">
+      <Header
+        isLoggedIn={!!user}
+        userName={username}
+        onLogin={() => navigate("/auth")}
+        onLogout={signOut}
+        onNewProject={() => navigate("/")}
+      />
+
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <Button asChild variant="ghost" size="sm" className="mb-8">
+          <Link to="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Projects
+          </Link>
+        </Button>
+
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
+              <Shield className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="font-serif text-4xl font-bold text-foreground">
+              Privacy Policy
+            </h1>
+            <p className="mt-4 text-muted-foreground">
               Last updated: January 2026
             </p>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">1. Information We Collect</h2>
-              <p>
-                We collect information you provide directly to us when you:
-              </p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Create an account (email, username)</li>
-                <li>Submit a project (title, description, URLs, tags)</li>
-                <li>Post comments</li>
-                <li>Update your profile (bio, avatar, social links)</li>
-                <li>Contact us through the Suggestion Box</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">2. How We Use Your Information</h2>
-              <p>
-                We use the information we collect to:
-              </p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Provide and maintain the Service</li>
-                <li>Display your projects and profile to other users</li>
-                <li>Send you important updates about the Service</li>
-                <li>Respond to your inquiries and suggestions</li>
-                <li>Improve and optimize the Service</li>
-                <li>Detect and prevent fraud or abuse</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">3. Information Sharing</h2>
-              <p>
-                We do not sell your personal information. We may share your information:
-              </p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>With your consent</li>
-                <li>To comply with legal obligations</li>
-                <li>To protect our rights and prevent abuse</li>
-                <li>With service providers who assist in operating the Service</li>
-              </ul>
-              <p className="mt-2">
-                Your public profile information and submitted projects are visible to all users of the Service.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">4. Data Security</h2>
-              <p>
-                We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">5. Data Retention</h2>
-              <p>
-                We retain your information for as long as your account is active or as needed to provide the Service. You may request deletion of your account and associated data at any time.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">6. Your Rights</h2>
-              <p>
-                You have the right to:
-              </p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Access your personal information</li>
-                <li>Correct inaccurate information</li>
-                <li>Delete your account and data</li>
-                <li>Export your data</li>
-                <li>Opt out of marketing communications</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">7. Cookies</h2>
-              <p>
-                We use essential cookies to maintain your session and remember your preferences. We do not use third-party tracking cookies for advertising purposes.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">8. Third-Party Services</h2>
-              <p>
-                The Service may contain links to third-party websites. We are not responsible for the privacy practices of these external sites. We encourage you to review their privacy policies.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">9. Children's Privacy</h2>
-              <p>
-                The Service is not intended for users under 13 years of age. We do not knowingly collect personal information from children under 13.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">10. Changes to This Policy</h2>
-              <p>
-                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last updated" date.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">11. Contact Us</h2>
-              <p>
-                If you have questions about this Privacy Policy, please contact us through the Suggestion Box on our website.
-              </p>
-            </section>
           </div>
-        </main>
 
-        {/* Footer */}
-        <footer className="border-t border-border bg-card/30 py-8 mt-12">
-          <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-            <p className="flex items-center justify-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              AI Builders Community Showcase
-            </p>
-          </div>
-        </footer>
-      </div>
-    </>
+          <Card>
+            <CardContent className="p-8 space-y-8">
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">1. Information We Collect</h2>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  We collect information you provide directly to us, including:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Account information (email address, username, password)</li>
+                  <li>Profile information (bio, avatar, social links)</li>
+                  <li>Project information (title, description, screenshots, URLs)</li>
+                  <li>Comments and interactions on the platform</li>
+                  <li>Communications you send to us</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">2. How We Use Your Information</h2>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  We use the information we collect to:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Provide, maintain, and improve the Service</li>
+                  <li>Create and manage your account</li>
+                  <li>Display your projects and profile to other users</li>
+                  <li>Send you technical notices and support messages</li>
+                  <li>Respond to your comments and questions</li>
+                  <li>Monitor and analyze usage patterns</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">3. Information Sharing</h2>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  We do not sell your personal information. We may share your information:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>With your consent</li>
+                  <li>To comply with legal obligations</li>
+                  <li>To protect our rights and safety</li>
+                  <li>With service providers who assist in operating the Service</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">4. Public Information</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  Your profile, projects, and comments are public by default. Anyone can view 
+                  this information without an account. Consider this when sharing information on 
+                  the platform.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">5. Data Security</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  We implement appropriate security measures to protect your personal information. 
+                  However, no method of transmission over the Internet is completely secure. 
+                  We cannot guarantee absolute security.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">6. Your Rights</h2>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  You have the right to:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Access your personal information</li>
+                  <li>Correct inaccurate information</li>
+                  <li>Delete your account and associated data</li>
+                  <li>Export your data</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">7. Cookies and Analytics</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  We use essential cookies to maintain your session and preferences. We may use 
+                  analytics tools to understand how users interact with the Service. You can 
+                  control cookies through your browser settings.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">8. Third-Party Services</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Service may contain links to third-party websites. We are not responsible 
+                  for the privacy practices of these sites. We encourage you to review their 
+                  privacy policies.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">9. Children's Privacy</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Service is not intended for children under 13. We do not knowingly collect 
+                  personal information from children under 13. If we learn we have collected 
+                  such information, we will delete it.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">10. Changes to This Policy</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  We may update this Privacy Policy from time to time. We will notify you of 
+                  significant changes by posting a notice on the Service.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-4">11. Contact Us</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you have questions about this Privacy Policy, please contact us at{" "}
+                  <a href="mailto:csells@sellsbrothers.com" className="text-primary hover:underline">
+                    csells@sellsbrothers.com
+                  </a>
+                </p>
+              </section>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 };
 
