@@ -10,9 +10,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Input validation schema - email removed, not collected
+// Input validation schema - email collected for reply but NOT stored in database
 const feedbackSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
+  email: z.string().trim().email("Invalid email").max(255, "Email too long"),
   message: z.string().trim().min(1, "Message is required").max(5000, "Message too long"),
 });
 
@@ -104,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { name, message } = parseResult.data;
+    const { name, email, message } = parseResult.data;
 
     // Get the recipient email from environment
     const recipientEmail = Deno.env.get("FEEDBACK_EMAIL");
@@ -127,21 +128,23 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Escape user input to prevent XSS in email content
     const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
     const safeMessage = escapeHtml(message);
 
-    // Send notification to admin (no user email collected for privacy)
+    // Send notification to admin with reply-to email (NOT stored in database)
     const adminEmailResponse = await sendEmail(
       [recipientEmail],
       `New Suggestion from ${safeName}`,
       `
         <h2>New Suggestion Received</h2>
         <p><strong>From:</strong> ${safeName}</p>
+        <p><strong>Reply to:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
         <p><strong>User ID:</strong> ${user.id}</p>
         <hr />
         <p><strong>Message:</strong></p>
         <p>${safeMessage.replace(/\n/g, "<br>")}</p>
         <hr />
-        <p style="color: #666; font-size: 12px;">This suggestion was submitted through AI Builders Community Showcase.</p>
+        <p style="color: #666; font-size: 12px;">This suggestion was submitted through AI Builders Community Showcase. Reply directly to the sender's email above.</p>
       `
     );
 
