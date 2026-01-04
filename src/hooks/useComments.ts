@@ -68,7 +68,7 @@ export function useComments(projectId: string) {
     fetchComments();
   }, [fetchComments]);
 
-  const addComment = async (userId: string, content: string): Promise<boolean> => {
+  const addComment = async (userId: string, content: string, commenterName?: string): Promise<boolean> => {
     const trimmedContent = content.trim();
     if (!trimmedContent) {
       toast.error("Comment cannot be empty");
@@ -86,6 +86,16 @@ export function useComments(projectId: string) {
       toast.error("Failed to add comment");
       return false;
     }
+
+    // Send email notification to project owner (fire and forget)
+    supabase.functions.invoke("notify-comment", {
+      body: {
+        projectId,
+        commenterId: userId,
+        commenterName: commenterName || "Someone",
+        commentContent: trimmedContent,
+      },
+    }).catch((err) => console.error("Failed to send notification:", err));
 
     await fetchComments();
     toast.success("Comment added!");

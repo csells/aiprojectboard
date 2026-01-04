@@ -18,11 +18,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ExternalLink, Github, Heart, MoreVertical, Pencil, Trash2, Users } from "lucide-react";
-import { useState } from "react";
+import { ExternalLink, Github, Heart, MessageCircle, MoreVertical, Pencil, Trash2, Users } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ProjectComments } from "@/components/ProjectComments";
+import { supabase } from "@/integrations/supabase/client";
 
 import { Project } from "@/hooks/useProjects";
 
@@ -50,8 +50,19 @@ export function ProjectCard({
   onLike,
 }: ProjectCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCommentCount = async () => {
+      const { count } = await supabase
+        .from("comments")
+        .select("*", { count: "exact", head: true })
+        .eq("project_id", project.id);
+      setCommentCount(count || 0);
+    };
+    fetchCommentCount();
+  }, [project.id]);
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on interactive elements
@@ -155,7 +166,7 @@ export function ProjectCard({
           )}
         </CardContent>
 
-        <CardFooter className="flex-col gap-2 border-t border-border pt-3">
+        <CardFooter className="border-t border-border pt-3">
           <div className="flex w-full items-center gap-2">
             <Button
               variant="ghost"
@@ -169,12 +180,13 @@ export function ProjectCard({
               <Heart className={cn("h-4 w-4", hasLiked && "fill-current")} />
               {likeCount > 0 && <span>{likeCount}</span>}
             </Button>
-            <ProjectComments
-              projectId={project.id}
-              userId={userId}
-              isExpanded={showComments}
-              onToggle={() => setShowComments(!showComments)}
-            />
+            <Link
+              to={`/project/${project.id}`}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
+            >
+              <MessageCircle className="h-4 w-4" />
+              {commentCount > 0 && <span>{commentCount}</span>}
+            </Link>
             <div className="flex-1" />
             {project.repoUrl && (
               <Button variant="ghost" size="sm" asChild>
@@ -191,16 +203,6 @@ export function ProjectCard({
               </Button>
             )}
           </div>
-          {showComments && (
-            <div className="w-full">
-              <ProjectComments
-                projectId={project.id}
-                userId={userId}
-                isExpanded={true}
-                onToggle={() => setShowComments(false)}
-              />
-            </div>
-          )}
         </CardFooter>
       </Card>
 
