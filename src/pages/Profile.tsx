@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { ProjectCard } from "@/components/ProjectCard";
 import { EditProjectDialog } from "@/components/EditProjectDialog";
 import { ProfileEditForm } from "@/components/ProfileEditForm";
@@ -252,7 +254,16 @@ const Profile = () => {
   ].filter(link => link.url);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Helmet>
+        <title>{profile.username || "User"} | AI Builders Community</title>
+        <meta name="description" content={`View ${profile.username || "User"}'s profile and AI projects on AI Builders Community.${profile.bio ? ` ${profile.bio}` : ""}`} />
+        <meta name="keywords" content={`${profile.username}, AI projects, developer, AI Builders`} />
+        <meta property="og:title" content={`${profile.username || "User"} | AI Builders Community`} />
+        <meta property="og:description" content={`View ${profile.username || "User"}'s AI projects.`} />
+        <meta property="og:type" content="profile" />
+      </Helmet>
+
       <Header
         isLoggedIn={!!user}
         userName={username}
@@ -393,6 +404,8 @@ const Profile = () => {
         onOpenChange={(open) => !open && setEditingProject(null)}
         onSubmit={handleEditProject}
       />
+
+      <Footer />
     </div>
   );
 };

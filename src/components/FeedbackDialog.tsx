@@ -46,11 +46,12 @@ export const FeedbackDialog = () => {
         throw new Error(data.error);
       }
 
-      toast.success("Thank you for your suggestion!");
-      setOpen(false);
+      // Success - close dialog first, then show toast
       setName("");
       setEmail("");
       setMessage("");
+      setOpen(false);
+      toast.success("Thank you for your suggestion! We'll review it soon.");
     } catch (error: any) {
       console.error("Feedback error:", error);
       toast.error(error.message || "Failed to send suggestion. Please try again.");

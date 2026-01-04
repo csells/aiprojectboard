@@ -84,34 +84,38 @@ const handler = async (req: Request): Promise<Response> => {
     // Send notification to admin
     const adminEmailResponse = await sendEmail(
       [recipientEmail],
-      `New Feedback from ${name}`,
+      `New Suggestion from ${name}`,
       `
-        <h2>New Feedback Received</h2>
+        <h2>New Suggestion Received</h2>
         <p><strong>From:</strong> ${name} (${email})</p>
         <hr />
         <p><strong>Message:</strong></p>
         <p>${message.replace(/\n/g, "<br>")}</p>
         <hr />
-        <p style="color: #666; font-size: 12px;">This feedback was submitted through AI Builders Community Showcase.</p>
+        <p style="color: #666; font-size: 12px;">This suggestion was submitted through AI Builders Community Showcase.</p>
       `
     );
 
     console.log("Admin notification sent:", adminEmailResponse);
 
-    // Send confirmation to user
-    const userEmailResponse = await sendEmail(
-      [email],
-      "Thank you for your feedback!",
-      `
-        <h2>Thank you, ${name}!</h2>
-        <p>We've received your feedback and appreciate you taking the time to share your thoughts with us.</p>
-        <p>We'll review your message and get back to you if needed.</p>
-        <br />
-        <p>Best regards,<br>The AI Builders Team</p>
-      `
-    );
-
-    console.log("User confirmation sent:", userEmailResponse);
+    // Try to send confirmation to user (may fail if domain not verified - that's OK)
+    try {
+      const userEmailResponse = await sendEmail(
+        [email],
+        "Thank you for your suggestion!",
+        `
+          <h2>Thank you, ${name}!</h2>
+          <p>We've received your suggestion and appreciate you taking the time to share your thoughts with us.</p>
+          <p>We'll review your message and get back to you if needed.</p>
+          <br />
+          <p>Best regards,<br>The AI Builders Team</p>
+        `
+      );
+      console.log("User confirmation sent:", userEmailResponse);
+    } catch (userEmailError) {
+      // User confirmation failed (likely domain not verified) - that's OK, admin got the message
+      console.log("User confirmation email could not be sent (domain may not be verified):", userEmailError);
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
