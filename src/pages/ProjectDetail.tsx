@@ -333,6 +333,7 @@ const ProjectDetail = () => {
                 <ProjectComments
                   projectId={project.id}
                   userId={user?.id}
+                  projectOwnerId={project.user_id}
                   isExpanded={true}
                   onToggle={() => {}}
                 />

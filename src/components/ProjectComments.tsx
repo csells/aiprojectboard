@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface ProjectCommentsProps {
   projectId: string;
   userId?: string;
+  projectOwnerId?: string;
   isExpanded?: boolean;
   onToggle?: () => void;
   commentCount?: number;
@@ -18,6 +19,7 @@ interface ProjectCommentsProps {
 export function ProjectComments({ 
   projectId, 
   userId, 
+  projectOwnerId,
   isExpanded = false,
   onToggle,
   commentCount: initialCount 
@@ -96,7 +98,7 @@ export function ProjectComments({
               <CommentItem
                 key={comment.id}
                 comment={comment}
-                isOwner={userId === comment.userId}
+                canDelete={userId === comment.userId || userId === projectOwnerId}
                 onDelete={() => deleteComment(comment.id)}
               />
             ))
@@ -142,11 +144,11 @@ export function ProjectComments({
 
 function CommentItem({ 
   comment, 
-  isOwner, 
+  canDelete, 
   onDelete 
 }: { 
   comment: Comment; 
-  isOwner: boolean;
+  canDelete: boolean;
   onDelete: () => void;
 }) {
   return (
@@ -165,7 +167,7 @@ function CommentItem({
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
           </span>
-          {isOwner && (
+          {canDelete && (
             <Button
               variant="ghost"
               size="icon"
