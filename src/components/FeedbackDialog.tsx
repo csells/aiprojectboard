@@ -24,6 +24,7 @@ interface FeedbackDialogProps {
 export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,7 +36,7 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !message.trim()) {
+    if (!name.trim() || !email.trim() || !message.trim()) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -44,7 +45,7 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
 
     try {
       const { data, error } = await supabase.functions.invoke("send-feedback", {
-        body: { name, message },
+        body: { name, email, message },
       });
 
       if (error) {
@@ -58,6 +59,7 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
 
       // Success - close dialog first, then show toast
       setName("");
+      setEmail("");
       setMessage("");
       setIsOpen(false);
       toast.success("Thank you for your suggestion! We'll review it soon.");
@@ -96,6 +98,17 @@ export const FeedbackDialog = ({ open, onOpenChange, trigger }: FeedbackDialogPr
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="feedback-email">Your Email</Label>
+            <Input
+              id="feedback-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="john@example.com"
               required
             />
           </div>
